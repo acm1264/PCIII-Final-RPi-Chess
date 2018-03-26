@@ -1,3 +1,9 @@
+######################################################
+# Names: Andrew Maurice, Cody Johnson, Lindsay Cason
+# Date: 5/16/18
+# Description: [[[[[[[[[[[[[[[[[[[add]]]]]]]]]]]]]]]]]]]]]]]]]]]
+#####################################################
+
 from Tkinter import *
 
 class newGame(Frame):
