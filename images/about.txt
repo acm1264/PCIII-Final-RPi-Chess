@@ -1,0 +1,1 @@
+this folder holds all image files to be ulitized by the code
