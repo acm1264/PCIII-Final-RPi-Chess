@@ -24,19 +24,21 @@ class newGame(Frame):
         self._p2Time = value
 
     def setupGUI(self):
-        blank = PhotoImage(file = "blank.gif")
-        whiteKing = PhotoImage(file = "whiteKing.gif")
-        whiteQueen = PhotoImage(file = "whiteQueen.gif")
-        whiteBishop = PhotoImage(file = "whiteBishop.gif")
-        whiteKnight = PhotoImage(file = "whiteKnight.gif")
-        whiteRook = PhotoImage(file = "whiteRook.gif")
-        whitePawn = PhotoImage(file = "whitePawn.gif")
-        blackKing = PhotoImage(file = "blackKing.gif")
-        blackQueen = PhotoImage(file = "blackQueen.gif")
-        blackBishop = PhotoImage(file = "blackBishop.gif")
-        blackKnight = PhotoImage(file = "blackKnight.gif")
-        blackRook = PhotoImage(file = "blackRook.gif")
-        blackPawn = PhotoImage(file = "blackPawn.gif")
+        #initialize all pieces and tiles with the proper images (located in the images folder on
+        #the main directory)
+        blank = PhotoImage(file = "images/blank.gif")
+        whiteKing = PhotoImage(file = "images/whiteKing.gif")
+        whiteQueen = PhotoImage(file = "images/whiteQueen.gif")
+        whiteBishop = PhotoImage(file = "images/whiteBishop.gif")
+        whiteKnight = PhotoImage(file = "images/whiteKnight.gif")
+        whiteRook = PhotoImage(file = "images/whiteRook.gif")
+        whitePawn = PhotoImage(file = "images/whitePawn.gif")
+        blackKing = PhotoImage(file = "images/blackKing.gif")
+        blackQueen = PhotoImage(file = "images/blackQueen.gif")
+        blackBishop = PhotoImage(file = "images/blackBishop.gif")
+        blackKnight = PhotoImage(file = "images/blackKnight.gif")
+        blackRook = PhotoImage(file = "images/blackRook.gif")
+        blackPawn = PhotoImage(file = "images/blackPawn.gif")
         
         square00 = Button(self.master, image = blackRook)
         square00.image = blackRook
