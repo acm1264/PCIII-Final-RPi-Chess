@@ -1,0 +1,4 @@
+this file can be used to jot down any ideas you have for things that may not be urgent but would be good to do if time
+
+make images transparent in their background so highlighting a blank tile visibly makes the full tile highlighted, and highlighting
+a piece tile will highlight all surrounding white space
