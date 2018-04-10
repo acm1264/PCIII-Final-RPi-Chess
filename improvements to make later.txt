@@ -2,3 +2,14 @@ this file can be used to jot down any ideas you have for things that may not be 
 
 make images transparent in their background so highlighting a blank tile visibly makes the full tile highlighted, and highlighting
 a piece tile will highlight all surrounding white space
+
+Highlights: Yellow - move to blank tile, Red - move to occupied tile, Green - Selected tiles
+
+possibly setting the state of the tile buttons to disabled if it is not a selectable tile based on turn (cannot select tile inhabited 
+by opposing colored piece)
+        - if the status is set to disabled it greys out the button, so it would be obvious which moves are possible. this could defeat
+          the purpose of having highlighting, but it is an option
+          
+make 4x4 grids of blank tiles for each discard, when a piece is overtaken it can be moved to these tiles.
+        - would require another instance variable that would keep track of the next discard tile to be filled for white and black
+        - change the image of the discard tile to the image of the piece
