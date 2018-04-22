@@ -13,3 +13,5 @@ by opposing colored piece)
 make 4x4 grids of blank tiles for each discard, when a piece is overtaken it can be moved to these tiles.
         - would require another instance variable that would keep track of the next discard tile to be filled for white and black
         - change the image of the discard tile to the image of the piece
+        
+make sure set code to go full screen display on pi, and have a way to exit out (like CTRL+C)
