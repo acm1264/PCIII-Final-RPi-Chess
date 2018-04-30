@@ -163,6 +163,14 @@ class Game(Frame):
         self.p1Turn.grid(row = 9, column = 4, columnspan = 2)
         self.p2Turn = Label(self.master, text = "", font = ("TkDefaultFont", 12))
         self.p2Turn.grid(row = 0, column = 4, columnspan = 2)
+
+        # timer text (set as class variables to be editted in countdown function
+        self.timer1 = Label(self.master, text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
+        self.timer1.grid(row = 9, column = 6, columnspan = 3, sticky = E)
+
+        self.timer2 = Label(self.master, text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
+        self.timer2.grid(row = 0, column = 6, columnspan = 3, sticky = E)
+
         
         # instruction side panel
         instructions = Label(self.master, text = "Instructions", font = ("TkDefaultFont", 12))
@@ -434,17 +442,12 @@ class Game(Frame):
         # counts down selected player's timer
         if (self.currentTurn == "white"):
             self.p1Time -= 1
+            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)))
              
         else:
             self.p2Time -= 1
+            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)))
             
-        # updates the timer
-        timer1 = Label(self.master, text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
-        timer1.grid(row = 9, column = 6, columnspan = 3, sticky = E)
-
-        timer2 = Label(self.master, text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
-        timer2.grid(row = 0, column = 6, columnspan = 3, sticky = E)
-
         # loops the function every second
         self.after(1000, self.countdown)
 
