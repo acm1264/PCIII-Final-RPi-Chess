@@ -22,8 +22,8 @@ class Game(Frame):
         self.blackPieces = []
         self.whitePieces = []
         #make instances of the Player class for each color to store in instance variables for the Game class
-        self.blackPlayer = Player("black", 300, 0, "resultTurn")
-        self.whitePlayer = Player("white", 300, 0, "resultTurn")
+        self.blackPlayer = Player("black", 0)
+        self.whitePlayer = Player("white", 0)
         #variable to hold value of if a piece is already highlighted (for process function to utilize) (maybe make it
         #hold the piece instance itself, where the process function can check if the variable is None to see if it is 
         #not holding a piece)
@@ -31,6 +31,7 @@ class Game(Frame):
         #variable to hold the color matching the current player whose turn it is (traditionally starts with white)
         self.currentTurn = "white"
 
+        #values for the clock times for both players
         self.p1Time = 900
         self.p2Time = 900
 
@@ -155,6 +156,13 @@ class Game(Frame):
         p1Title.grid(row = 9, column = 1, columnspan = 3)
         p2Title = Label(self.master, text = " Player Two ", font = ("TkDefaultFont", 12))
         p2Title.grid(row = 0, column = 1, columnspan = 3)
+
+        #"Your Turn" text (default to only show for white)
+        #set as class variables to be editted in displayTurn function
+        self.p1Turn = Label(self.master, text = "Your Turn", font = ("TkDefaultFont", 12))
+        self.p1Turn.grid(row = 9, column = 4, columnspan = 2)
+        self.p2Turn = Label(self.master, text = "", font = ("TkDefaultFont", 12))
+        self.p2Turn.grid(row = 0, column = 4, columnspan = 2)
         
         # instruction side panel
         instructions = Label(self.master, text = "Instructions", font = ("TkDefaultFont", 12))
@@ -164,7 +172,8 @@ class Game(Frame):
         highlight = Checkbutton(self.master, text = "Highlight?", font = ("TkDefaultFont", 12))
         highlight.grid(row = 9, column = 0)
         
-        # discard side panels
+        # discard side panels ##################try to change to have gap (if room), maybe have single
+        #############tile for pawn with a number to show how many are out to save room (reduce clutter)
         discard1 = Label(self.master, text = "White Discard", font = ("TkDefaultFont", 12))
         discard1.grid(row = 0, column = 9, columnspan = 4)
 
@@ -240,13 +249,21 @@ class Game(Frame):
             
             #if no piece was selected, skip the rest of the code
             if (self.pieceSelected != None):
-                #highlight the button holding the selected piece
-                self.highlight(button)
 
-                #get the list of possible moves the piece can perform
-                self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
+                #check that the color of the piece selected matches the current player
+                if(self.currentTurn == self.pieceSelected.color):
+                
+                    #highlight the button holding the selected piece
+                    self.highlight(button)
 
-                #######add all highlights (needs to be implemented)
+                    #get the list of possible moves the piece can perform
+                    self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
+
+                    #######add all highlights (needs to be implemented)
+
+                #piece selected is not current player's piece, deselect pieces
+                else:
+                    self.pieceSelected = None
             
         else:
             #a piece to move has been selected already, so determine if the second input is valid place to move (if not, keep possible
@@ -277,13 +294,15 @@ class Game(Frame):
                     
                     #######remove all highlights (needs to be implemented)
 		
-					#if piece is pawn, check to see if it reached the end of the board and should be swapped
+		    #if piece is pawn, check to see if it reached the end of the board and should be swapped
                     if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
                        (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
                         pawnSwap()
                     
                     #set the pieceSelected to none
                     self.pieceSelected = None
+                    #change the turn to the other player
+                    self.changeTurn()
 
             #if the same piece was clicked a second time, deselect it and unhighlight everything
             elif (secondPiece == self.pieceSelected):
@@ -310,6 +329,8 @@ class Game(Frame):
 
                 #set the piece selected to None
                 self.pieceSelected = None
+                #change the turn to the other player
+                self.changeTurn()
 
             #check if the second piece selected is the same color as the first
             elif (secondPiece.color == self.pieceSelected.color):
@@ -324,11 +345,9 @@ class Game(Frame):
                 #get the list of possible moves the piece can perform
                 self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
 				
-                #######add all highlights (needs to be implemented)
+                #######add all highlights (needs to be implemented)			
 				
-				
-				
-	###############special cases
+    ###############special cases
     #if a black pawn gets to row 8 or a white pawn gets to row 1 as a result of moving,
     #then process changing the piece
     def pawnSwap(self):
@@ -345,6 +364,13 @@ class Game(Frame):
             button.config(bg = "grey")
         else:
             button.config(bg = "green")
+
+    #change the current turn to the opposite player
+    def changeTurn(self):
+        if (self.currentTurn == "white"):
+            self.currentTurn = "black"
+        else:
+            self.currentTurn = "white"
     
     #function to return the coordinate of the inputted button as a row-column pair
     def buttonPosition(self, button):
@@ -406,12 +432,12 @@ class Game(Frame):
     # function that counts down and updates player timers on a loop
     def countdown(self):
         # counts down selected player's timer
-        # displays whose turn it is
         if (self.currentTurn == "white"):
             self.p1Time -= 1
+             
         else:
             self.p2Time -= 1
-
+            
         # updates the timer
         timer1 = Label(self.master, text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
         timer1.grid(row = 9, column = 6, columnspan = 3, sticky = E)
@@ -422,18 +448,26 @@ class Game(Frame):
         # loops the function every second
         self.after(1000, self.countdown)
 
+    #function to display whose turn it is currently
+    def displayTurn(self):
+        if (self.currentTurn == "white"):
+            self.p1Turn.config(bg = "red", text = "Your Turn")
+            self.p2Turn.config(bg = "SystemButtonFace", text = "")
+            
+        else:
+            self.p1Turn.config(bg = "SystemButtonFace", text = "")
+            self.p2Turn.config(bg = "red", text = "Your Turn")
+
+        # loops the function every millisecond
+        self.after(1, self.displayTurn)
+
 #Player class: inherits from Game, to be instantiated twice to make the two players
 class Player(Game):
-        def __init__(self, color, time, moveNumber, resultTurn):
+        def __init__(self, color, moveNumber):
                 #string variable to hold which color a player corresponds to (only black or white)
                 self.color = color
-                #integer to hold value of how much time the instance of the player has remaining [initialized to
-                #either the starting time or -1 if no timer is selected(if implemented)]
-                self.time = time
                 #integer to hold what current move the player is on
                 self.moveNumber = moveNumber
-                #integer to hold resultTurn (don't recall what this means???????)
-                self.resultTurn = resultTurn
                 
         #accessors and mutators for Player class variables
         @property
@@ -444,29 +478,12 @@ class Player(Game):
                 self._color = value
                 
         @property
-        def time(self):
-                return self._time
-        @time.setter
-        def time(self, value):
-                self._time = value
-                
-        @property
         def moveNumber(self):
                 return self._moveNumber
         @moveNumber.setter
         def moveNumber(self, value):
                 self._moveNumber = value
-                
-        @property
-        def resultTurn(self):
-                return self._resultTurn
-        @resultTurn.setter
-        def resultTurn(self, value):
-                self._resultTurn = value
-        
-        #function to process the player's individual turns
-        def takeTurn(self):
-                pass
+
 
 #Piece class: biggest class in center of program, (need to implement "hasa" relationship under Tile and Player classes
 #possibly byincluding an instance of the piece class in the Tile and Player classes?)
@@ -863,4 +880,5 @@ game = Game(window)
 game.setupGUI()
 game.setupGame()
 game.countdown()
+game.displayTurn()
 window.mainloop()
