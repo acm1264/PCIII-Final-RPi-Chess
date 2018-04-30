@@ -261,13 +261,11 @@ class Game(Frame):
                 #check that the color of the piece selected matches the current player
                 if(self.currentTurn == self.pieceSelected.color):
                 
-                    #highlight the button holding the selected piece
-                    self.highlight(button)
-
                     #get the list of possible moves the piece can perform
                     self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
 
-                    #######add all highlights (needs to be implemented)
+                    #highlight the button holding the selected piece and possible moves
+                    self.highlight(button)
 
                 #piece selected is not current player's piece, deselect pieces
                 else:
@@ -296,11 +294,12 @@ class Game(Frame):
                         break
 
                 if (pieceValid):
+                    #remove highlight from the button holding the selected piece and possible moves
+                    self.removeHighlight(self.tiles[self.pieceSelected.position])
+                    
                     #call the change position function using the pieceSelected as the initial selection
                     #and the button of the blank tile as the second
                     self.changePosition(button)
-                    
-                    #######remove all highlights (needs to be implemented)
 		
 		    #if piece is pawn, check to see if it reached the end of the board and should be swapped
                     if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
@@ -314,7 +313,8 @@ class Game(Frame):
 
             #if the same piece was clicked a second time, deselect it and unhighlight everything
             elif (secondPiece == self.pieceSelected):
-                    #######remove all highlights (needs to be implemented)
+                    #remove highlight from the button holding the selected piece and possible moves
+                    self.removeHighlight(self.tiles[self.pieceSelected.position])
 
                     #set the piece selected to None
                     self.pieceSelected = None
@@ -322,6 +322,8 @@ class Game(Frame):
             #there is a piece on the second tile selected, so check to see if the piece selected
             #is in the valid range of pieceSelectedMoves
             elif (secondPiece.position in self.pieceSelectedMoves):
+                #remove highlight from the button holding the selected piece and possible moves
+                self.removeHighlight(self.tiles[self.pieceSelected.position])
 				
                 #change the position of the moving piece to that of the one being overtaken
                 self.changePosition(button)
@@ -345,7 +347,8 @@ class Game(Frame):
                 #deselect the first piece and remove all its highlights, then select the new
                 #piece and display its highlights
 
-                ######remove all highlights(needs to be implemented)
+                #remove highlight from the button holding the selected piece and possible moves
+                self.removeHighlight(self.tiles[self.pieceSelected.position])
 
                 #set the initial selected piece to the new choice
                 self.pieceSelected = secondPiece
@@ -353,7 +356,8 @@ class Game(Frame):
                 #get the list of possible moves the piece can perform
                 self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
 				
-                #######add all highlights (needs to be implemented)			
+                #remove highlight from the button holding the selected piece and possible moves
+                self.highlight(self.tiles[self.pieceSelected.position])			
 				
     ###############special cases
     #if a black pawn gets to row 8 or a white pawn gets to row 1 as a result of moving,
@@ -362,16 +366,37 @@ class Game(Frame):
             pass
 
 
-    ###############
-        
-    #highlight buttons as needed (needs to be changed to work as desired with highlighting all needed tiles)
+    ###############end of special cases
+
+    ########highlight buttons as needed with these functions
+    #highlight initially selected piece green, and all possible moves
+    #yellow (blank) or red (occupied)
     def highlight(self, button):
-        # highlight and unhighlight (to be modified and moved to where needed in the process function, or to be its own function which
-        #process can simply call to deal with highlighting if feasible)
-        if (button.cget("bg") == "green"):
-            button.config(bg = "grey")
-        else:
-            button.config(bg = "green")
+        #highligh initial selection
+        button.config(bg = "green")
+
+        #highlight all possible moves
+        for i in self.pieceSelectedMoves:
+            #if no piece on the specified tile, highlight yellow
+            if (self.getPiece(self.tiles[i]) == None):
+                self.tiles[i].config(bg = "yellow")
+
+            #else highlight red (overtake color)
+            else:
+                self.tiles[i].config(bg = "red")
+
+    #remove all highlights (located on the initially selected button
+    #and all possible move buttons) (grey is unhighlighted color)
+    def removeHighlight(self, button):
+        #unhighlight initial selection
+        button.config(bg = "grey")
+
+        #unhighlight all possible moves
+        for i in self.pieceSelectedMoves:
+            self.tiles[i].config(bg = "grey")
+        
+                
+    ########end of highlight functions
 
     #change the current turn to the opposite player
     def changeTurn(self):
@@ -427,7 +452,7 @@ class Game(Frame):
             #update the piece instance to have the correct position (including row and column)
             self.pieceSelected.updatePiecePosition(button2Position)
 			
-			#check for special case of pawn's first move (if it was the first move for a pawn
+	    #check for special case of pawn's first move (if it was the first move for a pawn
             if (self.pieceSelected.image == blackPawn or self.pieceSelected.image == whitePawn):
                 if (self.pieceSelected.firstMove == True):
                     self.pieceSelected.firstMove = False
@@ -849,10 +874,14 @@ class Pawn(Piece):
 
         #move straight
         if (self.isValidTile((self.row + advance), self.column, self.color)):
-            moves.append((self.row + advance)*10 + self.column)
+            #tile is valid, but make sure it is blank
+            if (Game.getPiece(game, Game.tiles[(self.row+advance)*10+(self.column)]) == None):
+                moves.append((self.row + advance)*10 + self.column)
             #if it is the pawn's first move and the tile is available, it also has the option to move forward two tiles
             if(self.firstMove and self.isValidTile((self.row + advance*2), self.column, self.color)):
-                moves.append((self.row + advance*2)*10 + self.column)
+                #tile is valid, but make sure it is blank
+                if (Game.getPiece(game, Game.tiles[(self.row+advance*2)*10+(self.column)]) == None):
+                    moves.append((self.row + advance*2)*10 + self.column)
             
         #return the list of valid moves
         return moves
