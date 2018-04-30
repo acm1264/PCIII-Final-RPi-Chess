@@ -192,7 +192,7 @@ class Game(Frame):
         for r in range(1,5):
             for c in range(1,5):
                 name = "w" + str(r) + str (c)
-                self.tiles[name] = Button(self.master, image = blank, bd = 0, state = DISABLED)
+                self.tiles[name] = Button(self.master, image = blank, bd = 1, state = DISABLED)
                 self.tiles[name].grid(row = r, column = (c+9))
         
         discard2 = Label(self.master, text = "Black Discard", font = ("TkDefaultFont", 12))
@@ -201,7 +201,7 @@ class Game(Frame):
         for r in range(1, 5):
             for c in range(1,5):
                 name = "b" + str(r) + str(c)
-                self.tiles[name] = Button(self.master, image = blank, bd = 0, state = DISABLED)
+                self.tiles[name] = Button(self.master, image = blank, bd = 1, state = DISABLED)
                 self.tiles[name].grid(row = (r + 4), column = (c+9))
         
     #instantiate all pieces (black and white) and the two players    
