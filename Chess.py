@@ -19,8 +19,13 @@ class Game(Frame):
 
         
         
+        #stores pieces in play
         self.blackPieces = []
         self.whitePieces = []
+        #stores discard pieces
+        #type:number discarded
+        self.blackDiscard = {"King":0, "Queen":0, "Bishop":0, "Knight":0, "Rook":0, "Pawn":0}
+        self.whiteDiscard = {"King":0, "Queen":0, "Bishop":0, "Knight":0, "Rook":0, "Pawn":0}
         #make instances of the Player class for each color to store in instance variables for the Game class
         self.blackPlayer = Player("black", 0)
         self.whitePlayer = Player("white", 0)
@@ -59,6 +64,20 @@ class Game(Frame):
     @whitePieces.setter
     def whitePieces (self, value):
         self._whitePieces = value
+	
+    @property
+    def blackDiscard (self):
+        return self._blackDiscard
+    @blackDiscard.setter
+    def blackDiscard (self, value):
+        self._blackDiscard = value
+
+    @property
+    def whiteDiscard (self):
+        return self._whiteDiscard
+    @whiteDiscard.setter
+    def whiteDiscard (self, value):
+        self._whiteDiscard = value
 
     @property
     def pieceSelected (self):
@@ -173,32 +192,72 @@ class Game(Frame):
 
         
         # instruction side panel
-        instructions = Label(self.master, text = "Instructions", font = ("TkDefaultFont", 12))
+        instructions = Label(self.master, text = "Instructions", font = ("TkDefaultFont", 12), width = 22)
         instructions.grid(row = 0, rowspan = 8, column = 0)
         
         # highlight checkbutton
         highlight = Checkbutton(self.master, text = "Highlight?", font = ("TkDefaultFont", 12))
         highlight.grid(row = 9, column = 0)
         
-        # discard side panels ##################try to change to have gap (if room), maybe have single
-        #############tile for pawn with a number to show how many are out to save room (reduce clutter)
-        discard1 = Label(self.master, text = "White Discard", font = ("TkDefaultFont", 12))
-        discard1.grid(row = 0, column = 9, columnspan = 4)
-
-        for r in range(1,5):
-            for c in range(1,5):
-                name = "w" + str(r) + str (c)
-                self.tiles[name] = Button(self.master, image = blank, bg = "grey", state = DISABLED)
-                self.tiles[name].grid(row = r, column = (c+8))
+        # discard side panel
+        discardTitle = Label(self.master, text = "Discard", font = ("TkDefaultFont", 12), width = 22)
+        discardTitle.grid(row = 1, column = 10, columnspan = 3, sticky = N)
         
-        discard2 = Label(self.master, text = "Black Discard", font = ("TkDefaultFont", 12))
-        discard2.grid(row = 9, column = 9, columnspan = 4)
+        dWhiteLabel = Label(self.master, text = "White", font = ("TkDefaultFont", 12))
+        dWhiteLabel.grid(row = 2, column = 10)
 
-        for r in range(1, 5):
-            for c in range(1,5):
-                name = "b" + str(r) + str(c)
-                self.tiles[name] = Button(self.master, image = blank, bg = "grey", state = DISABLED)
-                self.tiles[name].grid(row = (r + 4), column = (c+8))
+        dBlackLabel = Label(self.master, text = "Black", font = ("TkDefaultFont", 12))
+        dBlackLabel.grid(row = 2, column = 12)
+
+        # use the list dictionaries of discard white pieces in game class to display the number of discarded pieces
+        # next to the image of the type
+
+        # i is used to keep up with the row
+        i = 3
+        for key in self.whiteDiscard.keys():
+            # creates a label using dictionary
+            key = Label(self.master, text = "x{}".format(self.whiteDiscard[key], font = ("TkDefaultFont",12)))
+            key.grid(row = i, column = 10)
+            # increment i
+            i += 1
+
+        # add discard images
+        # can probably be made more efficient
+        img = discardKing
+        dKing = Button(self.master, bg = "grey", image = img)
+        dKing.grid(row = 3, column = 11)
+        
+        img = discardQueen
+        dQueen = Button(self.master, bg = "grey", image = img)
+        dQueen.grid(row = 4, column = 11)
+
+        img = discardBishop
+        dBishop = Button(self.master, bg = "grey", image = img)
+        dBishop.grid(row = 5, column = 11)
+
+        img = discardKnight
+        dKnight = Button(self.master, bg = "grey", image = img)
+        dKnight.grid(row = 6, column = 11)
+
+        img = discardRook
+        dRook = Button(self.master, bg = "grey", image = img)
+        dRook.grid(row = 7, column = 11)
+
+        img = discardPawn
+        dPawn = Button(self.master, bg = "grey", image = img)
+        dPawn.grid(row = 8, column = 11)
+
+        
+        # use the dictionary of discard black pieces in the game class to display the number of discards next to the
+        # type
+        # i is used to keep up with the row
+        i = 3
+        for key in self.blackDiscard.keys():
+            # creates label using dictionary
+            key = Label(self.master, text = "x{}".format(self.blackDiscard[key], font = ("TkDefaultFont",12)))
+            key.grid(row = i, column = 12)
+            # increment i
+            i += 1
         
     #instantiate all pieces (black and white) and the two players    
     def setupGame(self):
@@ -906,6 +965,12 @@ blackBishop = PhotoImage(file = "images/blackBishop.gif")
 blackKnight = PhotoImage(file = "images/blackKnight.gif")
 blackRook = PhotoImage(file = "images/blackRook.gif")
 blackPawn = PhotoImage(file = "images/blackPawn.gif")
+discardKing = PhotoImage(file = "images/discardKing.gif")
+discardQueen = PhotoImage(file = "images/discardQueen.gif")
+discardBishop = PhotoImage(file = "images/discardBishop.gif")
+discardKnight = PhotoImage(file = "images/discardKnight.gif")
+discardRook = PhotoImage(file = "images/discardRook.gif")
+discardPawn = PhotoImage(file = "images/discardPawn.gif")
 
 window.title("Chess Reloaded")
 game = Game(window)
