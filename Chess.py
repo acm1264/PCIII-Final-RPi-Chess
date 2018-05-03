@@ -326,21 +326,44 @@ class Game(Frame):
                 
                     #get the list of possible moves the piece can perform
                     self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
+                    if DEBUG:
+                        print "possible moves of selected piece: {}".format(self.pieceSelectedMoves)
 
                     #if the player is contested, check if the possibleMoves of the selected piece
                     #would result in the player no longer being selected.
                     if (self.currentPlayerContested):
+                        #hold all moves to be removed in this list to avoid issues which checking
+                        #every index, removing all values from the actual pieceSelectedMoves list
+                        #at the end all at once
+                        remove = []
                         for move in self.pieceSelectedMoves:
+                            if DEBUG:
+                                print "move to look at: {}".format(move)
                             if (self.invalidUncheckMove(move)):
                                 #the move is not valid for removing the player from check, so it is invalid
-                                self.pieceSelectedMoves.remove(move)
+                                remove.append(move)
 
-                    #highlight the button holding the selected piece and possible moves
-                    self.highlight(button)
+                        #iterate through the remove list to remove the specified values from the list of
+                        #pieceSelectedMoves
+                        for index in remove:
+                            self.pieceSelectedMoves.remove(index)
+
+                        if DEBUG:
+                            print "since player is contested, this is the new list of "\
+                                  + "possible moves: {}".format(self.pieceSelectedMoves)
+                        
+                    #add line to skip highlighting and deselect piece if no valid moves
+                    if (self.pieceSelectedMoves == []):
+                        self.pieceSelected = None
+                    
+                    else:
+                        #highlight the button holding the selected piece and possible moves
+                        self.highlight(button)
 
                 #piece selected is not current player's piece, deselect pieces
                 else:
                     self.pieceSelected = None
+                    self.pieceSelectedMoves = []
             
         else:
             #a piece to move has been selected already, so determine if the second input is valid place to move (if not, keep possible
@@ -401,8 +424,9 @@ class Game(Frame):
                     else:
                         self.currentPlayerContested = False
                         
-                    #set the pieceSelected to none
+                    #set the pieceSelected to none and remove all indexes from the piece selected list
                     self.pieceSelected = None
+                    self.pieceSelectedMoves = []
                     #change the turn to the other player
                     self.changeTurn()
 
@@ -413,6 +437,7 @@ class Game(Frame):
 
                     #set the piece selected to None
                     self.pieceSelected = None
+                    self.pieceSelectedMoves = []
                 
             #there is a piece on the second tile selected, so check to see if the piece selected
             #is in the valid range of pieceSelectedMoves
@@ -463,6 +488,8 @@ class Game(Frame):
 
                 #set the piece selected to None
                 self.pieceSelected = None
+                self.pieceSelectedMoves = []
+                
                 #change the turn to the other player
                 self.changeTurn()
 
@@ -476,6 +503,7 @@ class Game(Frame):
 
                 #set the initial selected piece to the new choice
                 self.pieceSelected = secondPiece
+                self.pieceSelectedMoves = []
                 
                 #get the list of possible moves the piece can perform
                 self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
@@ -716,12 +744,10 @@ class Game(Frame):
         ######the move is valid. ((((also need to take into account if there is a piece being overtaken by
         ######removing its position entirely so it won't interfere in calculations))))
 
-        #store the piece in question's current position so it can be reset
-        originalPos = self.pieceSelected.position
-        #don't use change position function because only want to temporary change it, therefore the image
-        #does not need to be changed
-        self.pieceSelected.updatePiecePosition(move)
 
+        if DEBUG:
+            print "Move in question: {}".format(move)
+            
         #if there is a piece at the position in question that the selected piece is being moved to, then
         #it must be an overtake, so find that piece and remove its position (to be added back at end)
         overtakenPiece = None
@@ -730,20 +756,45 @@ class Game(Frame):
             #and store the piece itself in a variable so it can be given its position back
             overtakenPiece = self.getPiece(self.tiles[move])
             overtakenPiece.updatePiecePosition(00)
-                        
+            if DEBUG:
+                print "overtaken piece position set to {}".format(overtakenPiece.position)
+
+        elif (DEBUG):
+            print "no piece to overtake"
+
+        #store the piece in question's current position so it can be reset
+        originalPos = self.pieceSelected.position
+        #don't use change position function because only want to temporary change it, therefore the image
+        #does not need to be changed
+        self.pieceSelected.updatePiecePosition(move)
+        if DEBUG:
+            print "selected piece position updated to move: {}".format(self.pieceSelected.position)
+
         
+                        
+        #check the king for the player currently trying to move to see if, with the piece moved to its new
+        #potential location, the king would no longer be in check
         if (self.currentTurn == "white"):
             invalid = self.kingCheck(self.getWhiteKing())
         else:
             invalid = self.kingCheck(self.getBlackKing())
 
+        if DEBUG:
+            print "invalid = {}".format(invalid)
+
         #change the position of the selected piece back to where it originally was
         self.pieceSelected.updatePiecePosition(originalPos)
+        if DEBUG:
+            print "selected piece position reset to: {}".format(self.pieceSelected.position)
 
         #if the overtaken piece had its position removed, then add it back
         if (overtakenPiece != None):
             overtakenPiece.updatePiecePosition(move)
+            if DEBUG:
+                print "overtaken piece position reset to: {}".format(overtakenPiece.position)
 
+        if DEBUG:    
+            print "end of looking at move {}, proceeding...........................".format(move)
         #returns whether the possible move is valid to take the player out of check
         return invalid
             
