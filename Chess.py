@@ -330,27 +330,10 @@ class Game(Frame):
                         print "possible moves of selected piece: {}".format(self.pieceSelectedMoves)
 
                     #if the player is contested, check if the possibleMoves of the selected piece
-                    #would result in the player no longer being selected.
+                    #would result in the player no longer being selected (logic in playerContested()
+                    #function)
                     if (self.currentPlayerContested):
-                        #hold all moves to be removed in this list to avoid issues which checking
-                        #every index, removing all values from the actual pieceSelectedMoves list
-                        #at the end all at once
-                        remove = []
-                        for move in self.pieceSelectedMoves:
-                            if DEBUG:
-                                print "move to look at: {}".format(move)
-                            if (self.invalidUncheckMove(move)):
-                                #the move is not valid for removing the player from check, so it is invalid
-                                remove.append(move)
-
-                        #iterate through the remove list to remove the specified values from the list of
-                        #pieceSelectedMoves
-                        for index in remove:
-                            self.pieceSelectedMoves.remove(index)
-
-                        if DEBUG:
-                            print "since player is contested, this is the new list of "\
-                                  + "possible moves: {}".format(self.pieceSelectedMoves)
+                        self.playerContested()
                         
                     #add line to skip highlighting and deselect piece if no valid moves
                     if (self.pieceSelectedMoves == []):
@@ -412,6 +395,7 @@ class Game(Frame):
                     if (self.kingCheck(king)):
                         if (DEBUG):
                             print "The king is contested!"
+                            
                         #see if the player would be in checkmate, and end the game if they are
                         if (self.checkMate(king)):
                             pass
@@ -469,6 +453,7 @@ class Game(Frame):
                     if (self.kingCheck(king)):
                         if (DEBUG):
                             print "The king is contested!"
+                            
                         #see if the player would be in checkmate, and end the game if they are
                         if (self.checkMate(king)):
                             pass
@@ -507,9 +492,19 @@ class Game(Frame):
                 
                 #get the list of possible moves the piece can perform
                 self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
-				
-                #remove highlight from the button holding the selected piece and possible moves
-                self.highlight(self.tiles[self.pieceSelected.position])
+
+                #if the player is contested, check if the possibleMoves of the selected piece
+                #would result in the player no longer being selected.
+                if (self.currentPlayerContested):
+                    self.playerContested()
+
+                #add line to skip highlighting and deselect piece if no valid moves
+                if (self.pieceSelectedMoves == []):
+                    self.pieceSelected = None
+                    
+                else:
+                    #highlight the button holding the selected piece and possible moves
+                    self.highlight(self.tiles[self.pieceSelected.position])
 
     
 				
@@ -571,6 +566,40 @@ class Game(Frame):
             return True
         else:
             return False
+
+    #function to hold the general logic used when searching for if the king is in check,
+    #which can be applied to any direction based on inputted values of r and c (r and c
+    #values are used to modify the row and column depending on the direction desired)
+    def kingCheckLogic(self, king, r, c):
+        #stay in loop until invalid tile reached (or manual break)
+        while (king.isValidTile(king.row + r, king.column + c, king.color)):
+            #use the getPiece function in Game to determine if there is a piece on the tile
+            #(if there is, then the tile by default would hold a piece of the opposite color,
+            #which is valid and was already added to the list, though no further moves will work)
+            if (Game.getPiece(game, Game.tiles[(king.row+r)*10+(king.column+c)]) != None):
+                
+                #check if the king could be hit by the piece in question
+                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row+r)*10+(king.column+c)]))):
+                    #king can be hit, so set contested factors to True and return True
+                    return True
+
+            #modify r and c values appropriately
+            r = self.modifyRowColValues(r)
+            c = self.modifyRowColValues(c)
+
+        #king is not in check from this direction
+        return False
+
+    #function used by the kingCheckLogic function to modify the row and column values appropriately,
+    #where one is passed in at a time
+    def modifyRowColValues(self, i):
+        #increment a positive value, decrement a negative, or leave a 0 value unchanged
+        if(i > 0):
+            return i + 1
+        elif(i < 0):
+            return i - 1
+        else:
+            return i
     
     #function used after a player has moved to look at the king of the other player
     #and see if that other player is in check (ex: player A's piece is moved, check
@@ -585,135 +614,32 @@ class Game(Frame):
         #to check the remaining directions. If so, then immediately return True (and set king
         #contested variable to True if it is needed and kept)
 
-        #NE
-        i = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (king.isValidTile(king.row + i, king.column - i, king.color)):
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(king.row+i)*10+(king.column-i)]) != None):
-                
-                #check if the king could be hit by the piece in question
-                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row+i)*10+(king.column-i)]))):
-                    #king can be hit, so set contested factors to True and return True
-                    return True
-            #increment the counter for i
-            i = i + 1
-
-        #SE
-        i = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (king.isValidTile(king.row + i, king.column + i, king.color)):
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(king.row+i)*10+(king.column+i)]) != None):
-                #check if the king could be hit by the piece in question
-                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row+i)*10+(king.column+i)]))):
-                    #king can be hit, so set contested factors to True and return True
-                    return True
-            
-            #increment the counter for i
-            i = i + 1
-        
-
+        #check all directions using kingCheckLogic function to see if any piece could put the
+        #king in check in those directions
         #SW
-        i = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (king.isValidTile(king.row - i, king.column + i, king.color)):
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(king.row-i)*10+(king.column+i)]) != None):
-                #check if the king could be hit by the piece in question
-                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row-i)*10+(king.column+i)]))):
-                    #king can be hit, so set contested factors to True and return True
-                    return True
-            
-            #increment the counter for i
-            i = i + 1
-
+        if (self.kingCheckLogic(king, 1, -1)):
+            return True
+        #SE
+        if (self.kingCheckLogic(king, 1, 1)):
+            return True
+        #NE
+        if (self.kingCheckLogic(king, -1, 1)):
+            return True
         #NW
-        i = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (king.isValidTile(king.row - i, king.column - i, king.color)):
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(king.row-i)*10+(king.column-i)]) != None):
-                #check if the king could be hit by the piece in question
-                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row-i)*10+(king.column-i)]))):
-                    #king can be hit, so set contested factors to True and return True
-                    return True
-            
-            #increment the counter for i
-            i = i + 1
-        
+        if (self.kingCheckLogic(king, -1, -1)):
+            return True
         #up(up screen is negative y direction)
-        r = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (king.isValidTile(king.row - r, king.column, king.color)):
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(king.row-r)*10+(king.column)]) != None):
-                #check if the king could be hit by the piece in question
-                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row-r)*10+(king.column)]))):
-                    #king can be hit, so set contested factors to True and return True
-                    return True
-
-            #increment counter for the row
-            r = r + 1
-
+        if (self.kingCheckLogic(king, -1, 0)):
+            return True
         #down screen, positive y
-        r = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (king.isValidTile(king.row + r, king.column, king.color)):
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(king.row+r)*10+(king.column)]) != None):
-                #check if the king could be hit by the piece in question
-                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row+r)*10+(king.column)]))):
-                    #king can be hit, so set contested factors to True and return True
-                    return True
-
-            #increment counter for the row
-            r = r + 1
-
+        if (self.kingCheckLogic(king, 1, 0)):
+            return True
         #left
-        c = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (king.isValidTile(king.row, king.column-c, king.color)):
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(king.row)*10+(king.column-c)]) != None):
-                #check if the king could be hit by the piece in question
-                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row)*10+(king.column-c)]))):
-                    #king can be hit, so set contested factors to True and return True
-                    return True
-
-            #increment counter for the column
-            c = c + 1
-        
-
+        if (self.kingCheckLogic(king, 0, -1)):
+            return True
         #right
-        c = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (king.isValidTile(king.row, king.column+c, king.color)):
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(king.row)*10+(king.column+c)]) != None):
-                #check if the king could be hit by the piece in question
-                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row)*10+(king.column+c)]))):
-                    #king can be hit, so set contested factors to True and return True
-                    return True
-
-            #increment counter for the column
-            c = c + 1
+        if (self.kingCheckLogic(king, 0, 1)):
+            return True
 
         #also need to check if either of the knights on the other player's team can hit the king
         #first, get the list of all opposing knights on the board
@@ -731,6 +657,28 @@ class Game(Frame):
     #check by the kingCheck function to see if the game should be ended
     def checkMate(self, king):
         pass
+
+    #function to process the moves for a player who is currently contested
+    def playerContested(self):
+        #hold all moves to be removed in this list to avoid issues which checking
+        #every index, removing all values from the actual pieceSelectedMoves list
+        #at the end all at once
+        remove = []
+        for move in self.pieceSelectedMoves:
+            if DEBUG:
+                print "move to look at: {}".format(move)
+            if (self.invalidUncheckMove(move)):
+                #the move is not valid for removing the player from check, so it is invalid
+                remove.append(move)
+
+        #iterate through the remove list to remove the specified values from the list of
+        #pieceSelectedMoves
+        for index in remove:
+            self.pieceSelectedMoves.remove(index)
+
+        if DEBUG:
+            print "since player is contested, this is the new list of "\
+                    + "possible moves: {}".format(self.pieceSelectedMoves)
 
     #function to determine if a specified move is valid to make the king no longer be in check
     #(only called if the player is already known to be in check)
@@ -1024,145 +972,58 @@ class Piece(Game):
         else:
             return False
 
-	#possible moves for the bishop (located here because Queen and Bishop classes both utilize this function)
+    #function to hold the movement logic for both the bishop and rook to reduce copied code
+    def bishopAndRookMovementLogic(self, moves, r, c):
+        #stay in loop until invalid tile reached (or manual break)
+        while (self.isValidTile(self.row + r, self.column + c, self.color)):
+            #append the next move to the moves list
+            moves.append((self.row+r)*10 + self.column+c)
+
+            #use the getPiece function in Game to determine if there is a piece on the tile
+            #(if there is, then the tile by default would hold a piece of the opposite color,
+            #which is valid and was already added to the list, though no further moves will work)
+            if (Game.getPiece(game, Game.tiles[(self.row+r)*10+(self.column+c)]) != None):
+                break
+
+            #modify r and c values appropriately (use function from the Game class also used by the king)
+            r = self.modifyRowColValues(r)
+            c = self.modifyRowColValues(c)
+
+        #send the moves list back to the general movement function
+        return moves
+
+
+    #possible moves for the bishop (located here because Queen and Bishop classes both utilize this function)
     def bishopPossibleMoves(self):
         moves = []
 
-        #move NE
-        i = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (self.isValidTile(self.row + i, self.column - i, self.color)):
-            #append the next move to the moves list
-            moves.append((self.row+i)*10 + self.column-i)
-
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(self.row+i)*10+(self.column-i)]) != None):
-                break
-            
-            #increment the counter for i
-            i = i + 1
-
+        #call function using values to modify row and column in each direction and append possible
+        #moves to the possible moves list
         #move SE
-        i = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (self.isValidTile(self.row + i, self.column + i, self.color)):
-            #append the next move to the moves list
-            moves.append((self.row+i)*10 + self.column+i)
-
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(self.row+i)*10+(self.column+i)]) != None):
-                break
-            
-            #increment the counter for i
-            i = i + 1
-        
-
+        moves = self.bishopAndRookMovementLogic(moves, 1, 1)
         #move SW
-        i = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (self.isValidTile(self.row - i, self.column + i, self.color)):
-            #append the next move to the moves list
-            moves.append((self.row-i)*10 + self.column+i)
-
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(self.row-i)*10+(self.column+i)]) != None):
-                break
-            
-            #increment the counter for i
-            i = i + 1
-
+        moves = self.bishopAndRookMovementLogic(moves, 1, -1)
+        #move NE
+        moves = self.bishopAndRookMovementLogic(moves, -1, 1)
         #move NW
-        i = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (self.isValidTile(self.row - i, self.column - i, self.color)):
-            #append the next move to the moves list
-            moves.append((self.row-i)*10 + self.column-i)
-
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(self.row-i)*10+(self.column-i)]) != None):
-                break
-            
-            #increment the counter for i
-            i = i + 1
+        moves = self.bishopAndRookMovementLogic(moves, -1, -1)
         
         return moves
 	
-	#possible moves for the rook (located here because Queen and Rook classes both utilize this function)
+    #possible moves for the rook (located here because Queen and Rook classes both utilize this function)
     def rookPossibleMoves(self):
         moves = []
-        
+
+        #call function using values to modify row and column in each direction and append possible
+        #moves to the possible moves list
         #move up(up screen is negative y direction)
-        r = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (self.isValidTile(self.row - r, self.column, self.color)):
-            #append the next move to the moves list
-            moves.append((self.row-r)*10 + self.column)
-
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(self.row-r)*10+(self.column)]) != None):
-                break
-
-            #increment counter for the row
-            r = r + 1
-
+        moves = self.bishopAndRookMovementLogic(moves, -1, 0)
         #move down screen, positive y
-        r = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (self.isValidTile(self.row + r, self.column, self.color)):
-            #append the next move to the moves list
-            moves.append((self.row+r)*10 + self.column)
-
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(self.row+r)*10+(self.column)]) != None):
-                break
-
-            #increment counter for the row
-            r = r + 1
-
+        moves = self.bishopAndRookMovementLogic(moves, 1, 0)
         #move left
-        c = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (self.isValidTile(self.row, self.column-c, self.color)):
-            #append the next move to the moves list
-            moves.append((self.row)*10 + self.column-c)
-
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(self.row)*10+(self.column-c)]) != None):
-                break
-
-            #increment counter for the column
-            c = c + 1
-        
-
+        moves = self.bishopAndRookMovementLogic(moves, 0, -1)
         #move right
-        c = 1
-        #stay in loop until invalid tile reached (or manual break)
-        while (self.isValidTile(self.row, self.column+c, self.color)):
-            #append the next move to the moves list
-            moves.append((self.row)*10 + self.column+c)
-
-            #use the getPiece function in Game to determine if there is a piece on the tile
-            #(if there is, then the tile by default would hold a piece of the opposite color,
-            #which is valid and was already added to the list, though no further moves will work)
-            if (Game.getPiece(game, Game.tiles[(self.row)*10+(self.column+c)]) != None):
-                break
-
-            #increment counter for the column
-            c = c + 1
+        moves = self.bishopAndRookMovementLogic(moves, 0, 1)
 
         return moves
     
