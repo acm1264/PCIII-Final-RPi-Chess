@@ -6,6 +6,8 @@
 
 from Tkinter import *
 
+DEBUG = True
+
 #Game superclass to manage the program's implementation
 class Game(Frame):
         
@@ -35,6 +37,8 @@ class Game(Frame):
         self.pieceSelected = None
         #variable to hold the color matching the current player whose turn it is (traditionally starts with white)
         self.currentTurn = "white"
+        #boolean to hold if the current player's king is contested
+        self.currentPlayerContested = False
 
         #values for the clock times for both players
         self.p1Time = 900
@@ -323,6 +327,14 @@ class Game(Frame):
                     #get the list of possible moves the piece can perform
                     self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
 
+                    #if the player is contested, check if the possibleMoves of the selected piece
+                    #would result in the player no longer being selected.
+                    if (self.currentPlayerContested):
+                        for move in self.pieceSelectedMoves:
+                            if (self.invalidUncheckMove(move)):
+                                #the move is not valid for removing the player from check, so it is invalid
+                                self.pieceSelectedMoves.remove(move)
+
                     #highlight the button holding the selected piece and possible moves
                     self.highlight(button)
 
@@ -366,13 +378,29 @@ class Game(Frame):
                         pawnSwap()
 
                     #check the king for the player not currently moving to see if that player will be in check
-                    #for their turn
-                    if (self.kingCheck()):
-                        print "The king is contested!"
-
+                    #for their turn (color of the other player is the opposite of the color of the currently
+                    #selected piece)
+                    if(self.pieceSelected.color == "white"):
+                        king = self.getBlackKing()
                     else:
-                        print "The king is not contested!"
-                    
+                        king = self.getWhiteKing()
+
+                    #check if the player about to move is in check as a result of the move just made by the opponent
+                    if (self.kingCheck(king)):
+                        if (DEBUG):
+                            print "The king is contested!"
+                        #see if the player would be in checkmate, and end the game if they are
+                        if (self.checkMate(king)):
+                            pass
+
+                        #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
+                        #will modify what possibleMoves are allowed to be kept as valid
+                        self.currentPlayerContested = True
+
+                    #player is not contested, so reflect that in the boolean
+                    else:
+                        self.currentPlayerContested = False
+                        
                     #set the pieceSelected to none
                     self.pieceSelected = None
                     #change the turn to the other player
@@ -404,6 +432,35 @@ class Game(Frame):
                     (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
                     pawnSwap()
 
+                #check the king for the player not currently moving to see if that player will be in check
+                    #for their turn (color of the other player is the opposite of the color of the currently
+                    #selected piece)
+                    if(self.pieceSelected.color == "white"):
+                        king = self.getBlackKing()
+                    else:
+                        king = self.getWhiteKing()
+
+                    #check if the player about to move is in check as a result of the move just made by the opponent
+                    if (self.kingCheck(king)):
+                        if (DEBUG):
+                            print "The king is contested!"
+                        #see if the player would be in checkmate, and end the game if they are
+                        if (self.checkMate(king)):
+                            pass
+
+                        #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
+                        #will modify what possibleMoves are allowed to be kept as valid
+                        self.currentPlayerContested = True
+
+                    #player is not contested, so reflect that in the boolean
+                    else:
+                        self.currentPlayerContested = False
+                        
+                    #set the pieceSelected to none
+                    self.pieceSelected = None
+                    #change the turn to the other player
+                    self.changeTurn()
+
                 #set the piece selected to None
                 self.pieceSelected = None
                 #change the turn to the other player
@@ -424,7 +481,9 @@ class Game(Frame):
                 self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
 				
                 #remove highlight from the button holding the selected piece and possible moves
-                self.highlight(self.tiles[self.pieceSelected.position])			
+                self.highlight(self.tiles[self.pieceSelected.position])
+
+    
 				
     ###############special cases
     #if a black pawn gets to row 8 or a white pawn gets to row 1 as a result of moving,
@@ -436,18 +495,16 @@ class Game(Frame):
     ###############end of special cases
 
     ###############king logic
-        
-    #function to retrieve the king of the player who did not jsut move (ex: if player A
-    #just moved, get the king instance for player B)
-    def getKing(self):
-        #if white just moved, find the black King instance in the blackPieces list
-        if (self.pieceSelected.color == "white"):
-            for piece in self.blackPieces:
+
+    #function to return the piece instance of the black king
+    def getBlackKing(self):
+        for piece in self.blackPieces:
                 if (piece.image == blackKing):
                     return piece
-        #black just moved, so find white King in whitePieces list
-        else:
-            for piece in self.whitePieces:
+
+    #function to return the piece instance of the white king
+    def getWhiteKing(self):
+        for piece in self.whitePieces:
                 if (piece.image == whiteKing):
                     return piece
 
@@ -469,6 +526,13 @@ class Game(Frame):
                 if (piece.image == whiteKnight):
                     knights.append(piece)
 
+        #if the knight is still in play but has a position of None, this means the logic in the
+        #invalidUncheckMove function is processing a potential move where the knight would be
+        #overtaken. In this case, do not use that knight in determining if the king is in check
+        for piece in knights:
+            if (piece.position == None):
+                knights.remove(piece)
+                
         return knights
 
     #function to check if the position of a king is in the possibleMoves of another
@@ -483,11 +547,8 @@ class Game(Frame):
     #function used after a player has moved to look at the king of the other player
     #and see if that other player is in check (ex: player A's piece is moved, check
     #player B's king)
-    def kingCheck(self):
-        #get the proper king from the getKing function
-        king = self.getKing()
-
-        #ignoring knights until below now, a piece must be in one of eight directions
+    def kingCheck(self, king):
+        #ignoring knights until below this logic, a piece must be in one of eight directions
         #around the king to even have the potential of hitting him. Therefore, implement
         #logic similar to how the queen's possibleMoves function works, where all directions
         #are checked until a piece is reached. One a piece is reached, check if the piece is
@@ -637,11 +698,61 @@ class Game(Frame):
 
         #the king is not contested, so return False
         return False
+
+    #function used to see if a king is in checkmate. Only called if a player is confirmed to be in
+    #check by the kingCheck function to see if the game should be ended
+    def checkMate(self, king):
+        pass
+
+    #function to determine if a specified move is valid to make the king no longer be in check
+    #(only called if the player is already known to be in check)
+    def invalidUncheckMove(self, move):
+        ######possible way to implement: change the position (not the image on the tile, just position
+        ######value held by th ecurrent piece) to the possible move location, holding original position
+        ######in a temporary local variable. Then call the kingCheck function for the king of the same
+        ######color as the player whose turn it is. If true is returned, then the move would result in
+        ######check and so this function should (after updating the piece back to its original position)
+        ######return false. Otherwise, still update the position to the original but return true because
+        ######the move is valid. ((((also need to take into account if there is a piece being overtaken by
+        ######removing its position entirely so it won't interfere in calculations))))
+
+        #store the piece in question's current position so it can be reset
+        originalPos = self.pieceSelected.position
+        #don't use change position function because only want to temporary change it, therefore the image
+        #does not need to be changed
+        self.pieceSelected.updatePiecePosition(move)
+
+        #if there is a piece at the position in question that the selected piece is being moved to, then
+        #it must be an overtake, so find that piece and remove its position (to be added back at end)
+        overtakenPiece = None
+        if (self.getPiece(self.tiles[move]) != None):
+            #don't change the actual tiles or images, but set the position of that piece to be 00 (invalid)
+            #and store the piece itself in a variable so it can be given its position back
+            overtakenPiece = self.getPiece(self.tiles[move])
+            overtakenPiece.updatePiecePosition(00)
+                        
+        
+        if (self.currentTurn == "white"):
+            invalid = self.kingCheck(self.getWhiteKing())
+        else:
+            invalid = self.kingCheck(self.getBlackKing())
+
+        #change the position of the selected piece back to where it originally was
+        self.pieceSelected.updatePiecePosition(originalPos)
+
+        #if the overtaken piece had its position removed, then add it back
+        if (overtakenPiece != None):
+            overtakenPiece.updatePiecePosition(move)
+
+        #returns whether the possible move is valid to take the player out of check
+        return invalid
+            
             
 
     ##############end of king functions
 
     ########highlight buttons as needed with these functions
+    
     #highlight initially selected piece green, and all possible moves
     #yellow (blank) or red (occupied)
     def highlight(self, button):
