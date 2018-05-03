@@ -364,6 +364,14 @@ class Game(Frame):
                     if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
                        (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
                         pawnSwap()
+
+                    #check the king for the player not currently moving to see if that player will be in check
+                    #for their turn
+                    if (self.kingCheck()):
+                        print "The king is contested!"
+
+                    else:
+                        print "The king is not contested!"
                     
                     #set the pieceSelected to none
                     self.pieceSelected = None
@@ -426,6 +434,212 @@ class Game(Frame):
 
 
     ###############end of special cases
+
+    ###############king logic
+        
+    #function to retrieve the king of the player who did not jsut move (ex: if player A
+    #just moved, get the king instance for player B)
+    def getKing(self):
+        #if white just moved, find the black King instance in the blackPieces list
+        if (self.pieceSelected.color == "white"):
+            for piece in self.blackPieces:
+                if (piece.image == blackKing):
+                    return piece
+        #black just moved, so find white King in whitePieces list
+        else:
+            for piece in self.whitePieces:
+                if (piece.image == whiteKing):
+                    return piece
+
+    #function similar to the getKing function but to get the knights because they are
+    #the only piece which can hop other pieces to move and need to be checked
+    #to see if they would put the king in check
+    def getKnights(self):
+        #list to hold all knights found (0-2 depending on how many were overtaken)
+        knights = []
+        
+        #if white just moved, find the black Knight instances in the blackPieces list
+        if (self.pieceSelected.color == "white"):
+            for piece in self.blackPieces:
+                if (piece.image == blackKnight):
+                    knights.append(piece)
+        #black just moved, so find white Knights in whitePieces list
+        else:
+            for piece in self.whitePieces:
+                if (piece.image == whiteKnight):
+                    knights.append(piece)
+
+        return knights
+
+    #function to check if the position of a king is in the possibleMoves of another
+    #specified piece
+    def pieceInKingRange(self, king, other):
+        otherMoves = other.possibleMoves()
+        if (king.position in otherMoves):
+            return True
+        else:
+            return False
+    
+    #function used after a player has moved to look at the king of the other player
+    #and see if that other player is in check (ex: player A's piece is moved, check
+    #player B's king)
+    def kingCheck(self):
+        #get the proper king from the getKing function
+        king = self.getKing()
+
+        #ignoring knights until below now, a piece must be in one of eight directions
+        #around the king to even have the potential of hitting him. Therefore, implement
+        #logic similar to how the queen's possibleMoves function works, where all directions
+        #are checked until a piece is reached. One a piece is reached, check if the piece is
+        #of the opposite color. If so, call the possibleMoves for that piece and check if the
+        #position of the king is in the list of that piece's possible moves. If not, continue
+        #to check the remaining directions. If so, then immediately return True (and set king
+        #contested variable to True if it is needed and kept)
+
+        #NE
+        i = 1
+        #stay in loop until invalid tile reached (or manual break)
+        while (king.isValidTile(king.row + i, king.column - i, king.color)):
+            #use the getPiece function in Game to determine if there is a piece on the tile
+            #(if there is, then the tile by default would hold a piece of the opposite color,
+            #which is valid and was already added to the list, though no further moves will work)
+            if (Game.getPiece(game, Game.tiles[(king.row+i)*10+(king.column-i)]) != None):
+                
+                #check if the king could be hit by the piece in question
+                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row+i)*10+(king.column-i)]))):
+                    #king can be hit, so set contested factors to True and return True
+                    return True
+            #increment the counter for i
+            i = i + 1
+
+        #SE
+        i = 1
+        #stay in loop until invalid tile reached (or manual break)
+        while (king.isValidTile(king.row + i, king.column + i, king.color)):
+            #use the getPiece function in Game to determine if there is a piece on the tile
+            #(if there is, then the tile by default would hold a piece of the opposite color,
+            #which is valid and was already added to the list, though no further moves will work)
+            if (Game.getPiece(game, Game.tiles[(king.row+i)*10+(king.column+i)]) != None):
+                #check if the king could be hit by the piece in question
+                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row+i)*10+(king.column+i)]))):
+                    #king can be hit, so set contested factors to True and return True
+                    return True
+            
+            #increment the counter for i
+            i = i + 1
+        
+
+        #SW
+        i = 1
+        #stay in loop until invalid tile reached (or manual break)
+        while (king.isValidTile(king.row - i, king.column + i, king.color)):
+            #use the getPiece function in Game to determine if there is a piece on the tile
+            #(if there is, then the tile by default would hold a piece of the opposite color,
+            #which is valid and was already added to the list, though no further moves will work)
+            if (Game.getPiece(game, Game.tiles[(king.row-i)*10+(king.column+i)]) != None):
+                #check if the king could be hit by the piece in question
+                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row-i)*10+(king.column+i)]))):
+                    #king can be hit, so set contested factors to True and return True
+                    return True
+            
+            #increment the counter for i
+            i = i + 1
+
+        #NW
+        i = 1
+        #stay in loop until invalid tile reached (or manual break)
+        while (king.isValidTile(king.row - i, king.column - i, king.color)):
+            #use the getPiece function in Game to determine if there is a piece on the tile
+            #(if there is, then the tile by default would hold a piece of the opposite color,
+            #which is valid and was already added to the list, though no further moves will work)
+            if (Game.getPiece(game, Game.tiles[(king.row-i)*10+(king.column-i)]) != None):
+                #check if the king could be hit by the piece in question
+                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row-i)*10+(king.column-i)]))):
+                    #king can be hit, so set contested factors to True and return True
+                    return True
+            
+            #increment the counter for i
+            i = i + 1
+        
+        #up(up screen is negative y direction)
+        r = 1
+        #stay in loop until invalid tile reached (or manual break)
+        while (king.isValidTile(king.row - r, king.column, king.color)):
+            #use the getPiece function in Game to determine if there is a piece on the tile
+            #(if there is, then the tile by default would hold a piece of the opposite color,
+            #which is valid and was already added to the list, though no further moves will work)
+            if (Game.getPiece(game, Game.tiles[(king.row-r)*10+(king.column)]) != None):
+                #check if the king could be hit by the piece in question
+                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row-r)*10+(king.column)]))):
+                    #king can be hit, so set contested factors to True and return True
+                    return True
+
+            #increment counter for the row
+            r = r + 1
+
+        #down screen, positive y
+        r = 1
+        #stay in loop until invalid tile reached (or manual break)
+        while (king.isValidTile(king.row + r, king.column, king.color)):
+            #use the getPiece function in Game to determine if there is a piece on the tile
+            #(if there is, then the tile by default would hold a piece of the opposite color,
+            #which is valid and was already added to the list, though no further moves will work)
+            if (Game.getPiece(game, Game.tiles[(king.row+r)*10+(king.column)]) != None):
+                #check if the king could be hit by the piece in question
+                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row+r)*10+(king.column)]))):
+                    #king can be hit, so set contested factors to True and return True
+                    return True
+
+            #increment counter for the row
+            r = r + 1
+
+        #left
+        c = 1
+        #stay in loop until invalid tile reached (or manual break)
+        while (king.isValidTile(king.row, king.column-c, king.color)):
+            #use the getPiece function in Game to determine if there is a piece on the tile
+            #(if there is, then the tile by default would hold a piece of the opposite color,
+            #which is valid and was already added to the list, though no further moves will work)
+            if (Game.getPiece(game, Game.tiles[(king.row)*10+(king.column-c)]) != None):
+                #check if the king could be hit by the piece in question
+                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row)*10+(king.column-c)]))):
+                    #king can be hit, so set contested factors to True and return True
+                    return True
+
+            #increment counter for the column
+            c = c + 1
+        
+
+        #right
+        c = 1
+        #stay in loop until invalid tile reached (or manual break)
+        while (king.isValidTile(king.row, king.column+c, king.color)):
+            #use the getPiece function in Game to determine if there is a piece on the tile
+            #(if there is, then the tile by default would hold a piece of the opposite color,
+            #which is valid and was already added to the list, though no further moves will work)
+            if (Game.getPiece(game, Game.tiles[(king.row)*10+(king.column+c)]) != None):
+                #check if the king could be hit by the piece in question
+                if (self.pieceInKingRange(king, Game.getPiece(game, Game.tiles[(king.row)*10+(king.column+c)]))):
+                    #king can be hit, so set contested factors to True and return True
+                    return True
+
+            #increment counter for the column
+            c = c + 1
+
+        #also need to check if either of the knights on the other player's team can hit the king
+        #first, get the list of all opposing knights on the board
+        knights = self.getKnights()
+        for piece in knights:
+            #check if the king could be hit by the knight in question
+                if (self.pieceInKingRange(king, piece)):
+                    #king can be hit, so set contested factors to True and return True
+                    return True
+
+        #the king is not contested, so return False
+        return False
+            
+
+    ##############end of king functions
 
     ########highlight buttons as needed with these functions
     #highlight initially selected piece green, and all possible moves
