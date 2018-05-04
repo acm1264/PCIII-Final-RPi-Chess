@@ -28,6 +28,8 @@ class Game(Frame):
         #type:number discarded
         self.blackDiscard = {"King":0, "Queen":0, "Bishop":0, "Knight":0, "Rook":0, "Pawn":0}
         self.whiteDiscard = {"King":0, "Queen":0, "Bishop":0, "Knight":0, "Rook":0, "Pawn":0}
+        self.blackDiscardLabels = {}
+        self.whiteDiscardLabels = {}
         #make instances of the Player class for each color to store in instance variables for the Game class
         self.blackPlayer = Player("black", 0)
         self.whitePlayer = Player("white", 0)
@@ -110,6 +112,20 @@ class Game(Frame):
     @p2Time.setter
     def p2Time(self, value):
         self._p2Time = value
+
+    @property
+    def whiteDiscardLabels(self):
+        return self._whiteDiscardLabels
+    @whiteDiscardLabels.setter
+    def whiteDiscardLabels(self, value):
+        self._whiteDiscardLabels = value
+
+    @property
+    def blackDiscardLabels(self):
+        return self._blackDiscardLabels
+    @blackDiscardLabels.setter
+    def blackDiscardLabels(self, value):
+        self._blackDiscardLabels = value
         
     #sets up the majority of the GUI
     def setupGUI(self):
@@ -220,8 +236,8 @@ class Game(Frame):
         i = 3
         for key in self.whiteDiscard.keys():
             # creates a label using dictionary
-            key = Label(self.master, text = "x{}".format(self.whiteDiscard[key], font = ("TkDefaultFont",12)))
-            key.grid(row = i, column = 10)
+            self.whiteDiscardLabels[key] = Label(self.master, text = "x{}".format(self.whiteDiscard[key], font = ("TkDefaultFont",12)))
+            self.whiteDiscardLabels[key].grid(row = i, column = 10)
             # increment i
             i += 1
 
@@ -258,8 +274,8 @@ class Game(Frame):
         i = 3
         for key in self.blackDiscard.keys():
             # creates label using dictionary
-            key = Label(self.master, text = "x{}".format(self.blackDiscard[key], font = ("TkDefaultFont",12)))
-            key.grid(row = i, column = 12)
+            self.blackDiscardLabels[key] = Label(self.master, text = "x{}".format(self.blackDiscard[key], font = ("TkDefaultFont",12)))
+            self.blackDiscardLabels[key].grid(row = i, column = 12)
             # increment i
             i += 1
         
@@ -428,13 +444,13 @@ class Game(Frame):
             elif (secondPiece.position in self.pieceSelectedMoves):
                 #remove highlight from the button holding the selected piece and possible moves
                 self.removeHighlight(self.tiles[self.pieceSelected.position])
-				
-                #change the position of the moving piece to that of the one being overtaken
-                self.changePosition(button)
 
                 #call the overtake function to remove the second piece from play and place it on
                 #the column where it belongs
                 self.overtake(secondPiece)
+
+                #change the position of the moving piece to that of the one being overtaken
+                self.changePosition(button)
 
                 #if piece is pawn, check to see if it reached the end of the board and should be swapped
                 if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
@@ -822,7 +838,7 @@ class Game(Frame):
         #get the piece (if any)
         secondPiece = self.getPiece(secondButton)
 
-        #blank tile, so simply move the intial selection to the secondary location, updating the pictures for both
+        #blank tile, so simply move the initial selection to the secondary location, updating the pictures for both
         if (secondPiece == None):
             #set the button at the coordinate with the piece to have a blank image
             self.tiles[self.pieceSelected.position].configure(image = blank)
@@ -842,8 +858,40 @@ class Game(Frame):
     
     #function to overtake piece (the changePosition function could have logic to check if a piece is already inhabiting
     #the tile and call this function for the piece being overtaken to remove it)
-    def overtake(self, initialSelection, secondarySelection):
-        pass
+    def overtake(self, secondarySelection):
+        secondarySelection.updatePiecePosition(00)
+        self.updateDiscard(self.pieceSelected.image, 1)
+
+    # function that increments discarded piece count based on a given image and value
+    def updateDiscard(self, image, value):
+        if (image == blackKing):
+            self.blackDiscard["King"] += value
+        elif (image == blackQueen):
+            self.blackDiscard["Queen"] += value
+        elif (image == blackBishop):
+            self.blackDiscard["Bishop"] += value
+        elif (image == blackKnight):
+            self.blackDiscard["Knight"] += value
+        elif (image == blackRook):
+            self.blackDiscard["Rook"] += value
+        elif (image == blackPawn):
+            self.blackDiscard["Pawn"] += value
+        elif (image == whiteKing):
+            self.whiteDiscard["King"] += value
+        elif (image == whiteQueen):
+            self.whiteDiscard["Queen"] += value
+        elif (image == whiteBishop):
+            self.whiteDiscard["Bishop"] += value
+        elif (image == whiteKnight):
+            self.whiteDiscard["Knight"] += value
+        elif (image == whiteRook):
+            self.whiteDiscard["Rook"] += value
+        elif (image == whitePawn):
+            self.whiteDiscard["Pawn"] += value
+
+        for key in self.whiteDiscard.keys():
+            self.whiteDiscardLabels[key].config(text = "x{}".format(self.whiteDiscard[key]))
+            self.blackDiscardLabels[key].config(text = "x{}".format(self.blackDiscard[key]))
 
     # function that counts down and updates player timers on a loop
     def countdown(self):
