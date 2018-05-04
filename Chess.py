@@ -175,10 +175,10 @@ class Game(Frame):
                 self.tiles[coord].grid(row = r, column = c)
         
         # top player headers
-        p1Title = Label(self.master, text = " Player One ", font = ("TkDefaultFont", 12))
-        p1Title.grid(row = 9, column = 1, columnspan = 3)
-        p2Title = Label(self.master, text = " Player Two ", font = ("TkDefaultFont", 12))
-        p2Title.grid(row = 0, column = 1, columnspan = 3)
+        p1Title = Label(self.master, text = "Player One", font = ("TkDefaultFont", 12))
+        p1Title.grid(row = 9, column = 1, columnspan = 3, sticky = W)
+        p2Title = Label(self.master, text = "Player Two", font = ("TkDefaultFont", 12))
+        p2Title.grid(row = 0, column = 1, columnspan = 3, sticky = W)
 
         #"Your Turn" text (default to only show for white)
         #set as class variables to be editted in displayTurn function
@@ -196,8 +196,8 @@ class Game(Frame):
 
         
         # instruction side panel
-        instructions = Label(self.master, text = "Instructions", font = ("TkDefaultFont", 12), width = 22)
-        instructions.grid(row = 0, rowspan = 8, column = 0)
+        instructions = Label(self.master, text = "\nInstructions", font = ("TkDefaultFont", 12), width = 22)
+        instructions.grid(row = 0, rowspan = 8, column = 0, sticky = N)
         
         # highlight checkbutton
         highlight = Checkbutton(self.master, text = "Highlight?", font = ("TkDefaultFont", 12))
@@ -228,27 +228,27 @@ class Game(Frame):
         # add discard images
         # can probably be made more efficient
         img = discardKing
-        dKing = Button(self.master, bg = "grey", image = img)
+        dKing = Button(self.master, bg = "grey", bd = 1, image = img)
         dKing.grid(row = 3, column = 11)
         
         img = discardQueen
-        dQueen = Button(self.master, bg = "grey", image = img)
+        dQueen = Button(self.master, bg = "grey", bd = 1, image = img)
         dQueen.grid(row = 4, column = 11)
 
         img = discardBishop
-        dBishop = Button(self.master, bg = "grey", image = img)
+        dBishop = Button(self.master, bg = "grey", bd = 1, image = img)
         dBishop.grid(row = 5, column = 11)
 
         img = discardKnight
-        dKnight = Button(self.master, bg = "grey", image = img)
+        dKnight = Button(self.master, bg = "grey", bd = 1, image = img)
         dKnight.grid(row = 6, column = 11)
 
         img = discardRook
-        dRook = Button(self.master, bg = "grey", image = img)
+        dRook = Button(self.master, bg = "grey", bd = 1, image = img)
         dRook.grid(row = 7, column = 11)
 
         img = discardPawn
-        dPawn = Button(self.master, bg = "grey", image = img)
+        dPawn = Button(self.master, bg = "grey", bd = 1, image = img)
         dPawn.grid(row = 8, column = 11)
 
         
@@ -867,7 +867,7 @@ class Game(Frame):
             
         else:
             self.p1Turn.config(bg = "SystemButtonFace", text = "")
-            self.p2Turn.config(bg = "red", text = "Your Turn")
+            self.p2Turn.config(bg = "blue", text = "Your Turn")
 
         # loops the function every millisecond
         self.after(1, self.displayTurn)
