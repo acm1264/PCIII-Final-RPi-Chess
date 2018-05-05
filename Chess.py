@@ -2,7 +2,7 @@
 # Names: Andrew Maurice, Cody Johnson, Lindsay Cason
 # Date: 5/16/18
 # Description: DOES SOME PRETTY COOL STUFF
-######################################################
+#####################################################
 
 from Tkinter import *
 
@@ -18,7 +18,7 @@ class Game(Frame):
         Frame.__init__(self, master)
         self.master = master
         self.result = []
-
+        self.highlightActive = True
         
         
         #stores pieces in play
@@ -26,13 +26,10 @@ class Game(Frame):
         self.whitePieces = []
         #stores discard pieces
         #type:number discarded
-        self.discardType = ["King", "Queen", "Bishop", "Knight", "Rook", "Pawn"]
-        self.whiteDiscard = [0, 0, 0, 0, 0, 0]
-        self.blackDiscard = [0, 0, 0, 0, 0, 0]
-
+        self.blackDiscard = {"King":0, "Queen":0, "Bishop":0, "Knight":0, "Rook":0, "Pawn":0}
+        self.whiteDiscard = {"King":0, "Queen":0, "Bishop":0, "Knight":0, "Rook":0, "Pawn":0}
         self.blackDiscardLabels = {}
         self.whiteDiscardLabels = {}
-        
         #make instances of the Player class for each color to store in instance variables for the Game class
         self.blackPlayer = Player("black", 0)
         self.whitePlayer = Player("white", 0)
@@ -73,14 +70,7 @@ class Game(Frame):
     @whitePieces.setter
     def whitePieces (self, value):
         self._whitePieces = value
-
-    @property
-    def discardType (self):
-        return self._discardType
-    @discardType.setter
-    def discardType (self, value):
-        self._discardType = value
-    
+	
     @property
     def blackDiscard (self):
         return self._blackDiscard
@@ -94,20 +84,6 @@ class Game(Frame):
     @whiteDiscard.setter
     def whiteDiscard (self, value):
         self._whiteDiscard = value
-
-    @property
-    def whiteDiscardLabels(self):
-        return self._whiteDiscardLabels
-    @whiteDiscardLabels.setter
-    def whiteDiscardLabels(self, value):
-        self._whiteDiscardLabels = value
-
-    @property
-    def blackDiscardLabels(self):
-        return self._blackDiscardLabels
-    @blackDiscardLabels.setter
-    def blackDiscardLabels(self, value):
-        self._blackDiscardLabels = value        
 
     @property
     def pieceSelected (self):
@@ -136,6 +112,20 @@ class Game(Frame):
     @p2Time.setter
     def p2Time(self, value):
         self._p2Time = value
+
+    @property
+    def whiteDiscardLabels(self):
+        return self._whiteDiscardLabels
+    @whiteDiscardLabels.setter
+    def whiteDiscardLabels(self, value):
+        self._whiteDiscardLabels = value
+
+    @property
+    def blackDiscardLabels(self):
+        return self._blackDiscardLabels
+    @blackDiscardLabels.setter
+    def blackDiscardLabels(self, value):
+        self._blackDiscardLabels = value
         
     #sets up the majority of the GUI
     def setupGUI(self):
@@ -224,10 +214,12 @@ class Game(Frame):
         # instruction side panel
         instructions = Label(self.master, text = "\nInstructions", font = ("TkDefaultFont", 12), width = 22)
         instructions.grid(row = 0, rowspan = 8, column = 0, sticky = N)
-        
+
         # highlight checkbutton
-        highlight = Checkbutton(self.master, text = "Highlight?", font = ("TkDefaultFont", 12))
-        highlight.grid(row = 9, column = 0)
+        self.highlightBox = Checkbutton(self.master, text = "Highlight?", font = ("TkDefaultFont", 12), command = lambda: self.highlightCheck())
+        self.highlightBox.grid(row = 9, column = 0)
+        #set the button to on by default
+        self.highlightBox.select()
         
         # discard side panel
         discardTitle = Label(self.master, text = "Discard", font = ("TkDefaultFont", 12), width = 22)
@@ -239,10 +231,16 @@ class Game(Frame):
         dBlackLabel = Label(self.master, text = "Black", font = ("TkDefaultFont", 12))
         dBlackLabel.grid(row = 2, column = 12)
 
+        # use the list dictionaries of discard white pieces in game class to display the number of discarded pieces
+        # next to the image of the type
+
+        # i is used to keep up with the row
         i = 3
-        for p in range(0, len(self.discardType)):
-            self.whiteDiscardLabels[self.discardType[p]] = Label(self.master, text = "x{}".format(self.whiteDiscard[p]), font = ("TkDefaultFont",12))
-            self.whiteDiscardLabels[self.discardType[p]].grid(row = i, column = 10)
+        for key in self.whiteDiscard.keys():
+            # creates a label using dictionary
+            self.whiteDiscardLabels[key] = Label(self.master, text = "x{}".format(self.whiteDiscard[key], font = ("TkDefaultFont",12)))
+            self.whiteDiscardLabels[key].grid(row = i, column = 10)
+            # increment i
             i += 1
 
         # add discard images
@@ -271,12 +269,20 @@ class Game(Frame):
         dPawn = Button(self.master, bg = "grey", bd = 1, image = img)
         dPawn.grid(row = 8, column = 11)
 
+        
+        # use the dictionary of discard black pieces in the game class to display the number of discards next to the
+        # type
+        # i is used to keep up with the row
         i = 3
-        for p in range(0, len(self.discardType)):
-            self.blackDiscardLabels[self.discardType[p]] = Label(self.master, text = "x{}".format(self.blackDiscard[p]), font = ("TkDefaultFont",12))
-            self.blackDiscardLabels[self.discardType[p]].grid(row = i, column = 12)
+        for key in self.blackDiscard.keys():
+            # creates label using dictionary
+            self.blackDiscardLabels[key] = Label(self.master, text = "x{}".format(self.blackDiscard[key], font = ("TkDefaultFont",12)))
+            self.blackDiscardLabels[key].grid(row = i, column = 12)
+            # increment i
             i += 1
-    
+
+            if DEBUG:
+                print "added to black discard list the {} at row {}".format(key, i-1)
         
     #instantiate all pieces (black and white) and the two players    
     def setupGame(self):
@@ -323,6 +329,27 @@ class Game(Frame):
     def play(self):
         #would return a result of victor in the end
         pass
+
+    #process function for the highlight check box, where clicking it will turn highlighting on or off
+    def highlightCheck(self):
+        if DEBUG:
+            print "this is the highlihgt check function"
+        if (self.highlightActive):
+            if DEBUG:
+                print "the button is active, so turn it off"
+                    
+            self.highlightActive = False
+            #if there is a piece selected, remove the highlights from it and all possible moves 
+            if (self.pieceSelected != None):
+                self.removeHighlight(self.tiles[self.pieceSelected.position])
+                
+
+        else:
+            print "the button is inactive, so turn it on"
+            self.highlightActive = True
+            #if there is a piece selected, remove the highlights from it and all possible moves 
+            if (self.pieceSelected != None):
+                self.highlight(self.tiles[self.pieceSelected.position])
     
     #function to allow Buttons to be processed after being clicked (NOTE: this function processes a button being
     #pressed, so it takes a button as the input, not the piece, though the piece and button have the same coordinate
@@ -352,8 +379,9 @@ class Game(Frame):
                     #add line to skip highlighting and deselect piece if no valid moves
                     if (self.pieceSelectedMoves == []):
                         self.pieceSelected = None
-                    
-                    else:
+
+                    #highlight tiles if checkbox active
+                    elif(self.highlightActive):
                         #highlight the button holding the selected piece and possible moves
                         self.highlight(button)
 
@@ -385,8 +413,10 @@ class Game(Frame):
                         break
 
                 if (pieceValid):
-                    #remove highlight from the button holding the selected piece and possible moves
-                    self.removeHighlight(self.tiles[self.pieceSelected.position])
+                    #remove highlight tiles if checkbox active
+                    if(self.highlightActive):
+                        #remove highlight from the button holding the selected piece and possible moves
+                        self.removeHighlight(self.tiles[self.pieceSelected.position])
                     
                     #call the change position function using the pieceSelected as the initial selection
                     #and the button of the blank tile as the second
@@ -430,8 +460,10 @@ class Game(Frame):
 
             #if the same piece was clicked a second time, deselect it and unhighlight everything
             elif (secondPiece == self.pieceSelected):
-                    #remove highlight from the button holding the selected piece and possible moves
-                    self.removeHighlight(self.tiles[self.pieceSelected.position])
+                    #remove highlight tiles if checkbox active
+                    if(self.highlightActive):
+                        #remove highlight from the button holding the selected piece and possible moves
+                        self.removeHighlight(self.tiles[self.pieceSelected.position])
 
                     #set the piece selected to None
                     self.pieceSelected = None
@@ -440,8 +472,10 @@ class Game(Frame):
             #there is a piece on the second tile selected, so check to see if the piece selected
             #is in the valid range of pieceSelectedMoves
             elif (secondPiece.position in self.pieceSelectedMoves):
-                #remove highlight from the button holding the selected piece and possible moves
-                self.removeHighlight(self.tiles[self.pieceSelected.position])
+                #remove highlight tiles if checkbox active
+                if(self.highlightActive):
+                    #remove highlight from the button holding the selected piece and possible moves
+                    self.removeHighlight(self.tiles[self.pieceSelected.position])
 
                 #call the overtake function to remove the second piece from play and place it on
                 #the column where it belongs
@@ -467,18 +501,23 @@ class Game(Frame):
                 if (self.kingCheck(king)):
                     if (DEBUG):
                         print "The king is contested!"
-                        
+                            
                     #see if the player would be in checkmate, and end the game if they are
                     if (self.checkMate()):
                         pass
 
-                    #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
-                    #will modify what possibleMoves are allowed to be kept as valid
-                    self.currentPlayerContested = True
+                        #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
+                        #will modify what possibleMoves are allowed to be kept as valid
+                        self.currentPlayerContested = True
 
                 #player is not contested, so reflect that in the boolean
                 else:
                     self.currentPlayerContested = False
+                        
+                    #set the pieceSelected to none
+                    self.pieceSelected = None
+                    #change the turn to the other player
+                    self.changeTurn()
 
                 #set the piece selected to None
                 self.pieceSelected = None
@@ -492,8 +531,10 @@ class Game(Frame):
                 #deselect the first piece and remove all its highlights, then select the new
                 #piece and display its highlights
 
-                #remove highlight from the button holding the selected piece and possible moves
-                self.removeHighlight(self.tiles[self.pieceSelected.position])
+                #remove highlight tiles if checkbox active
+                if(self.highlightActive):
+                    #remove highlight from the button holding the selected piece and possible moves
+                    self.removeHighlight(self.tiles[self.pieceSelected.position])
 
                 #set the initial selected piece to the new choice
                 self.pieceSelected = secondPiece
@@ -510,7 +551,7 @@ class Game(Frame):
                 if (self.pieceSelectedMoves == []):
                     self.pieceSelected = None
                     
-                else:
+                elif(self.highlightActive):
                     #highlight the button holding the selected piece and possible moves
                     self.highlight(self.tiles[self.pieceSelected.position])
 
@@ -702,8 +743,7 @@ class Game(Frame):
                 print "Checkmate, game over"
             return True
         else:
-            if DEBUG:
-                print "only check, game continues"
+            print "only check, game continues"
             return False
 
     #function to process the moves for a player who is currently contested
@@ -892,21 +932,38 @@ class Game(Frame):
     #the tile and call this function for the piece being overtaken to remove it)
     def overtake(self, secondarySelection):
         secondarySelection.updatePiecePosition(00)
-        self.updateDiscard(secondarySelection)
+        self.updateDiscard(secondarySelection.image, 1)
 
     # function that increments discarded piece count based on a given image and value
-    def updateDiscard(self, secondarySelection):
-        # find the piece type index to update the parallel list
-        for i in range(0, len(self.discardType)):
-            if (self.discardType[i] == secondarySelection.pieceType):
-                index = i
-        # determine color and update parallel list
-        if (secondarySelection.color == "white"):
-            self.whiteDiscard[index] += 1
-            self.whiteDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.whiteDiscard[index]))
-        else:
-            self.blackDiscard[index] += 1
-            self.blackDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.blackDiscard[index]))    
+    def updateDiscard(self, image, value):
+        if (image == blackKing):
+            self.blackDiscard["King"] += value
+        elif (image == blackQueen):
+            self.blackDiscard["Queen"] += value
+        elif (image == blackBishop):
+            self.blackDiscard["Bishop"] += value
+        elif (image == blackKnight):
+            self.blackDiscard["Knight"] += value
+        elif (image == blackRook):
+            self.blackDiscard["Rook"] += value
+        elif (image == blackPawn):
+            self.blackDiscard["Pawn"] += value
+        elif (image == whiteKing):
+            self.whiteDiscard["King"] += value
+        elif (image == whiteQueen):
+            self.whiteDiscard["Queen"] += value
+        elif (image == whiteBishop):
+            self.whiteDiscard["Bishop"] += value
+        elif (image == whiteKnight):
+            self.whiteDiscard["Knight"] += value
+        elif (image == whiteRook):
+            self.whiteDiscard["Rook"] += value
+        elif (image == whitePawn):
+            self.whiteDiscard["Pawn"] += value
+
+        for key in self.whiteDiscard.keys():
+            self.whiteDiscardLabels[key].config(text = "x{}".format(self.whiteDiscard[key]))
+            self.blackDiscardLabels[key].config(text = "x{}".format(self.blackDiscard[key]))
 
     # function that counts down and updates player timers on a loop
     def countdown(self):
@@ -1097,12 +1154,11 @@ class Piece(Game):
 #King class
 class King(Piece):
     #utilize the Piece class constructor, in addition to the contested variable (False by default)
-    pieceType = "King"
     def __init__(self, image, color, position):
         #King only, if in check, the move options will be limited for the Player's next turn
         self.contested = False
         Piece.__init__(self, image, color, position)
-        
+
         @property
         def contested (self):
             return self._contested
@@ -1134,7 +1190,6 @@ class King(Piece):
     
 #Queen class
 class Queen(Piece):
-    pieceType = "Queen"
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1147,7 +1202,6 @@ class Queen(Piece):
     
 #Rook class
 class Rook(Piece):
-    pieceType = "Rook"
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1160,7 +1214,6 @@ class Rook(Piece):
     
 #Bishop class
 class Bishop(Piece):
-    pieceType = "Bishop"
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1173,7 +1226,6 @@ class Bishop(Piece):
         
 #Knight class
 class Knight(Piece):
-    pieceType = "Knight"
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1200,7 +1252,6 @@ class Knight(Piece):
     
 #Pawn class
 class Pawn(Piece):
-    pieceType = "Pawn"
     #utilize the Piece class constructor, in addition to the firstMove variable (True by default)
     def __init__(self, image, color, position):
         self.firstMove = True
