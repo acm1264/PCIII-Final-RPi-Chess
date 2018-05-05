@@ -8,6 +8,13 @@ from Tkinter import *
 
 DEBUG = True
 
+class Menu(Frame):
+    def __init__(self, master):
+        self.master = master
+
+    def setupGUI(self):
+        pass
+
 #Game superclass to manage the program's implementation
 class Game(Frame):
         
@@ -1305,9 +1312,14 @@ class Pawn(Piece):
 ###################################################################
 #Main part of program
 ###################################################################
+window2 = Tk()
+window2.title("Chess Reloaded")
+menu = Menu(window2)
+menu.setupGUI()
+window2.mainloop()
+
 window = Tk()
 
-#########possible move into a class?
 # initialize all images for later usage
 blank = PhotoImage(file = "images/blank.gif")
 whiteKing = PhotoImage(file = "images/whiteKing.gif")
