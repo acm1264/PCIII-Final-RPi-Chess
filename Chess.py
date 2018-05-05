@@ -2,7 +2,7 @@
 # Names: Andrew Maurice, Cody Johnson, Lindsay Cason
 # Date: 5/16/18
 # Description: DOES SOME PRETTY COOL STUFF
-#####################################################
+######################################################
 
 from Tkinter import *
 
@@ -26,10 +26,13 @@ class Game(Frame):
         self.whitePieces = []
         #stores discard pieces
         #type:number discarded
-        self.blackDiscard = {"King":0, "Queen":0, "Bishop":0, "Knight":0, "Rook":0, "Pawn":0}
-        self.whiteDiscard = {"King":0, "Queen":0, "Bishop":0, "Knight":0, "Rook":0, "Pawn":0}
+        self.discardType = ["King", "Queen", "Bishop", "Knight", "Rook", "Pawn"]
+        self.whiteDiscard = [0, 0, 0, 0, 0, 0]
+        self.blackDiscard = [0, 0, 0, 0, 0, 0]
+
         self.blackDiscardLabels = {}
         self.whiteDiscardLabels = {}
+        
         #make instances of the Player class for each color to store in instance variables for the Game class
         self.blackPlayer = Player("black", 0)
         self.whitePlayer = Player("white", 0)
@@ -70,7 +73,14 @@ class Game(Frame):
     @whitePieces.setter
     def whitePieces (self, value):
         self._whitePieces = value
-	
+
+    @property
+    def discardType (self):
+        return self._discardType
+    @discardType.setter
+    def discardType (self, value):
+        self._discardType = value
+    
     @property
     def blackDiscard (self):
         return self._blackDiscard
@@ -84,6 +94,20 @@ class Game(Frame):
     @whiteDiscard.setter
     def whiteDiscard (self, value):
         self._whiteDiscard = value
+
+    @property
+    def whiteDiscardLabels(self):
+        return self._whiteDiscardLabels
+    @whiteDiscardLabels.setter
+    def whiteDiscardLabels(self, value):
+        self._whiteDiscardLabels = value
+
+    @property
+    def blackDiscardLabels(self):
+        return self._blackDiscardLabels
+    @blackDiscardLabels.setter
+    def blackDiscardLabels(self, value):
+        self._blackDiscardLabels = value        
 
     @property
     def pieceSelected (self):
@@ -112,20 +136,6 @@ class Game(Frame):
     @p2Time.setter
     def p2Time(self, value):
         self._p2Time = value
-
-    @property
-    def whiteDiscardLabels(self):
-        return self._whiteDiscardLabels
-    @whiteDiscardLabels.setter
-    def whiteDiscardLabels(self, value):
-        self._whiteDiscardLabels = value
-
-    @property
-    def blackDiscardLabels(self):
-        return self._blackDiscardLabels
-    @blackDiscardLabels.setter
-    def blackDiscardLabels(self, value):
-        self._blackDiscardLabels = value
         
     #sets up the majority of the GUI
     def setupGUI(self):
@@ -229,16 +239,10 @@ class Game(Frame):
         dBlackLabel = Label(self.master, text = "Black", font = ("TkDefaultFont", 12))
         dBlackLabel.grid(row = 2, column = 12)
 
-        # use the list dictionaries of discard white pieces in game class to display the number of discarded pieces
-        # next to the image of the type
-
-        # i is used to keep up with the row
         i = 3
-        for key in self.whiteDiscard.keys():
-            # creates a label using dictionary
-            self.whiteDiscardLabels[key] = Label(self.master, text = "x{}".format(self.whiteDiscard[key], font = ("TkDefaultFont",12)))
-            self.whiteDiscardLabels[key].grid(row = i, column = 10)
-            # increment i
+        for p in range(0, len(self.discardType)):
+            self.whiteDiscardLabels[self.discardType[p]] = Label(self.master, text = "x{}".format(self.whiteDiscard[p]), font = ("TkDefaultFont",12))
+            self.whiteDiscardLabels[self.discardType[p]].grid(row = i, column = 10)
             i += 1
 
         # add discard images
@@ -267,17 +271,12 @@ class Game(Frame):
         dPawn = Button(self.master, bg = "grey", bd = 1, image = img)
         dPawn.grid(row = 8, column = 11)
 
-        
-        # use the dictionary of discard black pieces in the game class to display the number of discards next to the
-        # type
-        # i is used to keep up with the row
         i = 3
-        for key in self.blackDiscard.keys():
-            # creates label using dictionary
-            self.blackDiscardLabels[key] = Label(self.master, text = "x{}".format(self.blackDiscard[key], font = ("TkDefaultFont",12)))
-            self.blackDiscardLabels[key].grid(row = i, column = 12)
-            # increment i
+        for p in range(0, len(self.discardType)):
+            self.blackDiscardLabels[self.discardType[p]] = Label(self.master, text = "x{}".format(self.blackDiscard[p]), font = ("TkDefaultFont",12))
+            self.blackDiscardLabels[self.discardType[p]].grid(row = i, column = 12)
             i += 1
+    
         
     #instantiate all pieces (black and white) and the two players    
     def setupGame(self):
@@ -897,38 +896,21 @@ class Game(Frame):
     #the tile and call this function for the piece being overtaken to remove it)
     def overtake(self, secondarySelection):
         secondarySelection.updatePiecePosition(00)
-        self.updateDiscard(self.pieceSelected.image, 1)
+        self.updateDiscard(secondarySelection)
 
     # function that increments discarded piece count based on a given image and value
-    def updateDiscard(self, image, value):
-        if (image == blackKing):
-            self.blackDiscard["King"] += value
-        elif (image == blackQueen):
-            self.blackDiscard["Queen"] += value
-        elif (image == blackBishop):
-            self.blackDiscard["Bishop"] += value
-        elif (image == blackKnight):
-            self.blackDiscard["Knight"] += value
-        elif (image == blackRook):
-            self.blackDiscard["Rook"] += value
-        elif (image == blackPawn):
-            self.blackDiscard["Pawn"] += value
-        elif (image == whiteKing):
-            self.whiteDiscard["King"] += value
-        elif (image == whiteQueen):
-            self.whiteDiscard["Queen"] += value
-        elif (image == whiteBishop):
-            self.whiteDiscard["Bishop"] += value
-        elif (image == whiteKnight):
-            self.whiteDiscard["Knight"] += value
-        elif (image == whiteRook):
-            self.whiteDiscard["Rook"] += value
-        elif (image == whitePawn):
-            self.whiteDiscard["Pawn"] += value
-
-        for key in self.whiteDiscard.keys():
-            self.whiteDiscardLabels[key].config(text = "x{}".format(self.whiteDiscard[key]))
-            self.blackDiscardLabels[key].config(text = "x{}".format(self.blackDiscard[key]))
+    def updateDiscard(self, secondarySelection):
+        # find the piece type index to update the parallel list
+        for i in range(0, len(self.discardType)):
+            if (self.discardType[i] == secondarySelection.pieceType):
+                index = i
+        # determine color and update parallel list
+        if (secondarySelection.color == "white"):
+            self.whiteDiscard[index] += 1
+            self.whiteDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.whiteDiscard[index]))
+        else:
+            self.blackDiscard[index] += 1
+            self.blackDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.blackDiscard[index]))    
 
     # function that counts down and updates player timers on a loop
     def countdown(self):
@@ -1119,11 +1101,12 @@ class Piece(Game):
 #King class
 class King(Piece):
     #utilize the Piece class constructor, in addition to the contested variable (False by default)
+    pieceType = "King"
     def __init__(self, image, color, position):
         #King only, if in check, the move options will be limited for the Player's next turn
         self.contested = False
         Piece.__init__(self, image, color, position)
-
+        
         @property
         def contested (self):
             return self._contested
@@ -1155,6 +1138,7 @@ class King(Piece):
     
 #Queen class
 class Queen(Piece):
+    pieceType = "Queen"
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1167,6 +1151,7 @@ class Queen(Piece):
     
 #Rook class
 class Rook(Piece):
+    pieceType = "Rook"
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1179,6 +1164,7 @@ class Rook(Piece):
     
 #Bishop class
 class Bishop(Piece):
+    pieceType = "Bishop"
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1191,6 +1177,7 @@ class Bishop(Piece):
         
 #Knight class
 class Knight(Piece):
+    pieceType = "Knight"
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1217,6 +1204,7 @@ class Knight(Piece):
     
 #Pawn class
 class Pawn(Piece):
+    pieceType = "Pawn"
     #utilize the Piece class constructor, in addition to the firstMove variable (True by default)
     def __init__(self, image, color, position):
         self.firstMove = True
