@@ -348,8 +348,7 @@ class Game(Frame):
                     #if the player is contested, check if the possibleMoves of the selected piece
                     #would result in the player no longer being selected (logic in playerContested()
                     #function)
-                    if (self.currentPlayerContested):
-                        self.playerContested()
+                    self.playerContested()
                         
                     #add line to skip highlighting and deselect piece if no valid moves
                     if (self.pieceSelectedMoves == []):
@@ -413,7 +412,7 @@ class Game(Frame):
                             print "The king is contested!"
                             
                         #see if the player would be in checkmate, and end the game if they are
-                        if (self.checkMate(king)):
+                        if (self.checkMate()):
                             pass
 
                         #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
@@ -471,7 +470,7 @@ class Game(Frame):
                             print "The king is contested!"
                             
                         #see if the player would be in checkmate, and end the game if they are
-                        if (self.checkMate(king)):
+                        if (self.checkMate()):
                             pass
 
                         #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
@@ -511,8 +510,7 @@ class Game(Frame):
 
                 #if the player is contested, check if the possibleMoves of the selected piece
                 #would result in the player no longer being selected.
-                if (self.currentPlayerContested):
-                    self.playerContested()
+                self.playerContested()
 
                 #add line to skip highlighting and deselect piece if no valid moves
                 if (self.pieceSelectedMoves == []):
@@ -550,12 +548,12 @@ class Game(Frame):
     #function similar to the getKing function but to get the knights because they are
     #the only piece which can hop other pieces to move and need to be checked
     #to see if they would put the king in check
-    def getKnights(self):
+    def getKnights(self, king):
         #list to hold all knights found (0-2 depending on how many were overtaken)
         knights = []
         
         #if white just moved, find the black Knight instances in the blackPieces list
-        if (self.pieceSelected.color == "white"):
+        if (king.color == "white"):
             for piece in self.blackPieces:
                 if (piece.image == blackKnight):
                     knights.append(piece)
@@ -659,7 +657,7 @@ class Game(Frame):
 
         #also need to check if either of the knights on the other player's team can hit the king
         #first, get the list of all opposing knights on the board
-        knights = self.getKnights()
+        knights = self.getKnights(king)
         for piece in knights:
             #check if the king could be hit by the knight in question
                 if (self.pieceInKingRange(king, piece)):
@@ -671,8 +669,47 @@ class Game(Frame):
 
     #function used to see if a king is in checkmate. Only called if a player is confirmed to be in
     #check by the kingCheck function to see if the game should be ended
-    def checkMate(self, king):
-        pass
+    def checkMate(self):
+        #to check pieces, set the piece needed to be checked to selectedPiece and store its moves in
+        #selectedPieceMoves so each move can be checked to see if any moves are valid
+        #first, change the turn so the player whose king is being checked is considered the "currentTurn"
+        self.changeTurn()
+
+        #assume in checkmate until proven otherwise
+        checkmate = True
+
+        #go through the list of pieces for the player in question and find possible moves. Once a move is
+        #found and put into the moves list, the for loop can be broken from because the player is not in
+        #checkmate
+        if(self.currentTurn == "white"):
+            pieceList = self.whitePieces
+
+        else:
+            pieceList = self.blackPieces
+
+        #go through every piece and see if any piece has at least one possible move. If a move is found,
+        #the player is not in checkmate
+        for piece in pieceList:
+            self.pieceSelected = piece
+            self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
+            self.playerContested()
+
+            #at least one piece has a possible move to take the player out of check, so break from the loop
+            if (len(self.pieceSelectedMoves) > 0):
+                checkmate = False
+                break
+                
+        #change the currentTurn back to the original player who just moved to avoid skipping a player's turn
+        self.changeTurn()
+
+        #if there are no possible moves found for any pieces, the player is in checkmate
+        if (checkmate):
+            if DEBUG:
+                print "Checkmate, game over"
+            return True
+        else:
+            print "only check, game continues"
+            return False
 
     #function to process the moves for a player who is currently contested
     def playerContested(self):
@@ -765,7 +802,7 @@ class Game(Frame):
             
 
     ##############end of king functions
-
+    
     ########highlight buttons as needed with these functions
     
     #highlight initially selected piece green, and all possible moves
