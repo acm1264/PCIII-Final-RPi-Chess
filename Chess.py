@@ -27,9 +27,6 @@ class Game(Frame):
         self.master = master
         self.result = []
         self.highlightActive = True
-
-        
-        
         #stores pieces in play
         self.blackPieces = []
         self.whitePieces = []
@@ -41,6 +38,8 @@ class Game(Frame):
 
         self.blackDiscardLabels = {}
         self.whiteDiscardLabels = {}
+
+        self.discardedPieces = []
         
         #make instances of the Player class for each color to store in instance variables for the Game class
         self.blackPlayer = Player("black", 0)
@@ -53,6 +52,9 @@ class Game(Frame):
         self.currentTurn = "white"
         #boolean to hold if the current player's king is contested
         self.currentPlayerContested = False
+
+        # variable to keep up with pawnSwap
+        self.pawnSwap = False
 
         #values for the clock times for both players
         self.p1Time = 900
@@ -116,7 +118,14 @@ class Game(Frame):
         return self._blackDiscardLabels
     @blackDiscardLabels.setter
     def blackDiscardLabels(self, value):
-        self._blackDiscardLabels = value        
+        self._blackDiscardLabels = value
+
+    @property
+    def discardedPieces (self):
+        return self._discardedPieces
+    @discardedPieces.setter
+    def discardedPieces (self, value):
+        self._discardedPieces = value
 
     @property
     def pieceSelected (self):
@@ -131,6 +140,13 @@ class Game(Frame):
     @currentTurn.setter
     def currentTurn (self, value):
         self._currentTurn = value
+
+    @property
+    def pawnSwap (self):
+        return self._pawnSwap
+    @pawnSwap.setter
+    def pawnSwap (self, value):
+        self._pawnSwap = value
 
     @property
     def p1Time(self, value):
@@ -242,50 +258,56 @@ class Game(Frame):
         
         # discard side panel
         discardTitle = Label(self.master, text = "Discard", font = ("TkDefaultFont", 12), width = 22)
-        discardTitle.grid(row = 1, column = 10, columnspan = 3, sticky = N)
+        discardTitle.grid(row = 1, column = 9, columnspan = 3, sticky = N)
         
         dWhiteLabel = Label(self.master, text = "White", font = ("TkDefaultFont", 12))
-        dWhiteLabel.grid(row = 2, column = 10)
+        dWhiteLabel.grid(row = 2, column = 9)
 
         dBlackLabel = Label(self.master, text = "Black", font = ("TkDefaultFont", 12))
-        dBlackLabel.grid(row = 2, column = 12)
+        dBlackLabel.grid(row = 2, column = 11)
 
         i = 3
         for p in range(0, len(self.discardType)):
             self.whiteDiscardLabels[self.discardType[p]] = Label(self.master, text = "x{}".format(self.whiteDiscard[p]), font = ("TkDefaultFont",12))
-            self.whiteDiscardLabels[self.discardType[p]].grid(row = i, column = 10)
+            self.whiteDiscardLabels[self.discardType[p]].grid(row = i, column = 9)
             i += 1
 
         # add discard images
         # can probably be made more efficient
         img = discardKing
         dKing = Button(self.master, bg = "grey", bd = 1, image = img)
-        dKing.grid(row = 3, column = 11)
+        dKing.grid(row = 3, column = 10)
+        dKing.config(command = lambda: self.process(dKing))
         
         img = discardQueen
         dQueen = Button(self.master, bg = "grey", bd = 1, image = img)
-        dQueen.grid(row = 4, column = 11)
+        dQueen.grid(row = 4, column = 10)
+        dQueen.config(command = lambda:  self.process(dQueen))
 
         img = discardBishop
         dBishop = Button(self.master, bg = "grey", bd = 1, image = img)
-        dBishop.grid(row = 5, column = 11)
+        dBishop.grid(row = 5, column = 10)
+        dBishop.config(command = lambda: self.process(dBishop))
 
         img = discardKnight
         dKnight = Button(self.master, bg = "grey", bd = 1, image = img)
-        dKnight.grid(row = 6, column = 11)
+        dKnight.grid(row = 6, column = 10)
+        dKnight.config(command = lambda: self.process(dKnight))
 
         img = discardRook
         dRook = Button(self.master, bg = "grey", bd = 1, image = img)
-        dRook.grid(row = 7, column = 11)
+        dRook.grid(row = 7, column = 10)
+        dRook.config(command = lambda: self.process(dRook))
 
         img = discardPawn
         dPawn = Button(self.master, bg = "grey", bd = 1, image = img)
-        dPawn.grid(row = 8, column = 11)
+        dPawn.grid(row = 8, column = 10)
+        dPawn.config(command = lambda: self.process(dPawn))
 
         i = 3
         for p in range(0, len(self.discardType)):
             self.blackDiscardLabels[self.discardType[p]] = Label(self.master, text = "x{}".format(self.blackDiscard[p]), font = ("TkDefaultFont",12))
-            self.blackDiscardLabels[self.discardType[p]].grid(row = i, column = 12)
+            self.blackDiscardLabels[self.discardType[p]].grid(row = i, column = 11)
             i += 1
     
         
@@ -362,204 +384,261 @@ class Game(Frame):
     #pressed, so it takes a button as the input, not the piece, though the piece and button have the same coordinate
     #so a function can be made to return the piece based on the button)
     def process(self, button):
-        #check if a piece has already been selected
-        if (self.pieceSelected == None):
-            #set the pieceSelected variable to the piece at the same position as the button
-            self.pieceSelected = self.getPiece(button)
-            
-            #if no piece was selected, skip the rest of the code
-            if (self.pieceSelected != None):
+        if (self.pawnSwap):
+            if (int(button.grid_info()["column"]) == 10):
+                row = int(button.grid_info()["row"])
+                if(self.discardType[row-3] != "Pawn"):
+                    if (self.currentTurn == "white"):
+                        if (self.whiteDiscard[row-3] > 0 ):
+                            for piece in self.discardedPieces:
+                                if (piece.color == self.currentTurn and piece.pieceType == self.discardType[row-3]):
+                                    pawnPosition = self.pieceSelected.position
+                                    self.overtake(self.pieceSelected)
+                                    self.tiles[pawnPosition].configure(image = piece.image)
+                                    piece.updatePiecePosition(pawnPosition)
+                                    self.whiteDiscard[row-3] -= 1
+                                    self.whitePieces.append(piece)
+                                    self.discardedPieces.remove(piece)
+                                    self.pawnSwap = False
+                                    break
+                    else:
+                        if (self.blackDiscard[row-3] > 0 ):
+                            for piece in self.discardedPieces:
+                                if (piece.color == self.currentTurn and piece.pieceType == self.discardType[row-3]):
+                                    pawnPosition = self.pieceSelected.position
+                                    self.overtake(self.pieceSelected)
+                                    self.tiles[pawnPosition].configure(image = piece.image)
+                                    piece.updatePiecePosition(pawnPosition)
+                                    self.pieceDiscard[row-3] -= 1
+                                    self.piecePieces.append(piece)
+                                    self.discardedPieces.remove(piece)
+                                    self.pawnSwap = False
+                                    break
 
-                #check that the color of the piece selected matches the current player
-                if(self.currentTurn == self.pieceSelected.color):
+                    if (not self.pawnSwap):
+                        #check the king for the player not currently moving to see if that player will be in check
+                            #for their turn (color of the other player is the opposite of the color of the currently
+                            #selected piece)
+                            if(self.pieceSelected.color == "white"):
+                                king = self.getBlackKing()
+                            else:
+                                king = self.getWhiteKing()
+
+                            #check if the player about to move is in check as a result of the move just made by the opponent
+                            if (self.kingCheck(king)):
+                                if (DEBUG):
+                                    print "The king is contested!"
+                                    
+                                #see if the player would be in checkmate, and end the game if they are
+                                if (self.checkMate()):
+                                    pass
+
+                                #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
+                                #will modify what possibleMoves are allowed to be kept as valid
+                                self.currentPlayerContested = True
+
+                            #player is not contested, so reflect that in the boolean
+                            else:
+                                self.currentPlayerContested = False
+
+                            #set the piece selected to None
+                            self.pieceSelected = None
+                            self.pieceSelectedMoves = []
+                            
+                            #change the turn to the other player
+                            self.changeTurn()
+        else:
+            #check if a piece has already been selected
+            if (self.pieceSelected == None):
+                #set the pieceSelected variable to the piece at the same position as the button
+                self.pieceSelected = self.getPiece(button)
                 
+                #if no piece was selected, skip the rest of the code
+                if (self.pieceSelected != None):
+
+                    #check that the color of the piece selected matches the current player
+                    if(self.currentTurn == self.pieceSelected.color):
+                    
+                        #get the list of possible moves the piece can perform
+                        self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
+                        if DEBUG:
+                            print "possible moves of selected piece: {}".format(self.pieceSelectedMoves)
+
+                        #if the player is contested, check if the possibleMoves of the selected piece
+                        #would result in the player no longer being selected (logic in playerContested()
+                        #function)
+                        self.playerContested()
+                            
+                        #add line to skip highlighting and deselect piece if no valid moves
+                        if (self.pieceSelectedMoves == []):
+                            self.pieceSelected = None
+                        
+                        #only highlight if there are any possible moves
+                        if (self.pieceSelectedMoves != []):
+                            #highlight the button holding the selected piece and possible moves
+                            self.highlight(button)
+
+                    #piece selected is not current player's piece, deselect pieces
+                    else:
+                        self.pieceSelected = None
+                        self.pieceSelectedMoves = []
+                
+            else:
+                #a piece to move has been selected already, so determine if the second input is valid place to move (if not, keep possible
+                #moves highlighted to allow player to select a different piece. However, if the same piece is selected again, this would
+                #mean the player wishes to deselect the first piece so highlights should be removed; similarly, if the player selects
+                #another piece that is also theirs, the first piece can be deselected and the second can be used instead as the "initial
+                #selection")
+                
+                #check to see if the second button selected corresponds to a valid place for the initial piece selected to move
+                #local variable to temporarily hold the piece located on the second space (if there is one)
+                secondPiece = self.getPiece(button)
+
+                #check to see if the second button is blank
+                if (secondPiece == None):
+                    #if no piece, get the coordinate of the tile to make sure it fits in the range of possible moves
+                    blankPosition = self.buttonPosition(button)
+
+                    pieceValid = False
+                    for i in range(len(self.pieceSelectedMoves)):
+                        if(blankPosition == self.pieceSelectedMoves[i]):
+                            pieceValid = True
+                            break
+
+                    if (pieceValid):
+                        #remove highlight from the button holding the selected piece and possible moves
+                        self.removeHighlight(self.tiles[self.pieceSelected.position])
+                        
+                        #call the change position function using the pieceSelected as the initial selection
+                        #and the button of the blank tile as the second
+                        self.changePosition(button)
+                    
+                        #if piece is pawn, check to see if it reached the end of the board and should be swapped
+                        if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
+                           (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
+                            self.pawnSwap = True
+                            # prompt user about pawnSwap in status bar
+                        else:
+                            #check the king for the player not currently moving to see if that player will be in check
+                            #for their turn (color of the other player is the opposite of the color of the currently
+                            #selected piece)
+                            if(self.pieceSelected.color == "white"):
+                                king = self.getBlackKing()
+                            else:
+                                king = self.getWhiteKing()
+
+                            #check if the player about to move is in check as a result of the move just made by the opponent
+                            if (self.kingCheck(king)):
+                                if (DEBUG):
+                                    print "The king is contested!"
+                                    
+                                #see if the player would be in checkmate, and end the game if they are
+                                if (self.checkMate()):
+                                    pass
+
+                                #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
+                                #will modify what possibleMoves are allowed to be kept as valid
+                                self.currentPlayerContested = True
+
+                            #player is not contested, so reflect that in the boolean
+                            else:
+                                self.currentPlayerContested = False
+                                
+                            #set the pieceSelected to none and remove all indexes from the piece selected list
+                            self.pieceSelected = None
+                            self.pieceSelectedMoves = []
+                            #change the turn to the other player
+                            self.changeTurn()
+
+                #if the same piece was clicked a second time, deselect it and unhighlight everything
+                elif (secondPiece == self.pieceSelected):
+                        #remove highlight from the button holding the selected piece and possible moves
+                        self.removeHighlight(self.tiles[self.pieceSelected.position])
+
+                        #set the piece selected to None
+                        self.pieceSelected = None
+                        self.pieceSelectedMoves = []
+                    
+                #there is a piece on the second tile selected, so check to see if the piece selected
+                #is in the valid range of pieceSelectedMoves
+                elif (secondPiece.position in self.pieceSelectedMoves):
+                    #remove highlight from the button holding the selected piece and possible moves
+                    self.removeHighlight(self.tiles[self.pieceSelected.position])
+
+                    #call the overtake function to remove the second piece from play and place it on
+                    #the column where it belongs
+                    self.overtake(secondPiece)
+
+                    #change the position of the moving piece to that of the one being overtaken
+                    self.changePosition(button)
+
+                    #if piece is pawn, check to see if it reached the end of the board and should be swapped
+                    if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
+                        (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
+                        self.pawnSwap = True
+                        # prompt user about pawnSwap in status bar
+                    else:
+                        #check the king for the player not currently moving to see if that player will be in check
+                        #for their turn (color of the other player is the opposite of the color of the currently
+                        #selected piece)
+                        if(self.pieceSelected.color == "white"):
+                            king = self.getBlackKing()
+                        else:
+                            king = self.getWhiteKing()
+
+                        #check if the player about to move is in check as a result of the move just made by the opponent
+                        if (self.kingCheck(king)):
+                            if (DEBUG):
+                                print "The king is contested!"
+                                
+                            #see if the player would be in checkmate, and end the game if they are
+                            if (self.checkMate()):
+                                pass
+
+                            #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
+                            #will modify what possibleMoves are allowed to be kept as valid
+                            self.currentPlayerContested = True
+
+                        #player is not contested, so reflect that in the boolean
+                        else:
+                            self.currentPlayerContested = False
+
+                        #set the piece selected to None
+                        self.pieceSelected = None
+                        self.pieceSelectedMoves = []
+                        
+                        #change the turn to the other player
+                        self.changeTurn()
+
+                #check if the second piece selected is the same color as the first
+                elif (secondPiece.color == self.pieceSelected.color):
+                    #deselect the first piece and remove all its highlights, then select the new
+                    #piece and display its highlights
+
+                    #remove highlight from the button holding the selected piece and possible moves
+                    self.removeHighlight(self.tiles[self.pieceSelected.position])
+
+                    #set the initial selected piece to the new choice
+                    self.pieceSelected = secondPiece
+                    self.pieceSelectedMoves = []
+                    
                     #get the list of possible moves the piece can perform
                     self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
-                    if DEBUG:
-                        print "possible moves of selected piece: {}".format(self.pieceSelectedMoves)
 
                     #if the player is contested, check if the possibleMoves of the selected piece
-                    #would result in the player no longer being selected (logic in playerContested()
-                    #function)
+                    #would result in the player no longer being selected.
                     self.playerContested()
-                        
+
                     #add line to skip highlighting and deselect piece if no valid moves
                     if (self.pieceSelectedMoves == []):
                         self.pieceSelected = None
-                    
+                        
                     #only highlight if there are any possible moves
-                    if (self.pieceSelectedMoves != []):
+                    else:
                         #highlight the button holding the selected piece and possible moves
-                        self.highlight(button)
-
-                #piece selected is not current player's piece, deselect pieces
-                else:
-                    self.pieceSelected = None
-                    self.pieceSelectedMoves = []
-            
-        else:
-            #a piece to move has been selected already, so determine if the second input is valid place to move (if not, keep possible
-            #moves highlighted to allow player to select a different piece. However, if the same piece is selected again, this would
-            #mean the player wishes to deselect the first piece so highlights should be removed; similarly, if the player selects
-            #another piece that is also theirs, the first piece can be deselected and the second can be used instead as the "initial
-            #selection")
-            
-            #check to see if the second button selected corresponds to a valid place for the initial piece selected to move
-            #local variable to temporarily hold the piece located on the second space (if there is one)
-            secondPiece = self.getPiece(button)
-
-            #check to see if the second button is blank
-            if (secondPiece == None):
-                #if no piece, get the coordinate of the tile to make sure it fits in the range of possible moves
-                blankPosition = self.buttonPosition(button)
-
-                pieceValid = False
-                for i in range(len(self.pieceSelectedMoves)):
-                    if(blankPosition == self.pieceSelectedMoves[i]):
-                        pieceValid = True
-                        break
-
-                if (pieceValid):
-                    #remove highlight from the button holding the selected piece and possible moves
-                    self.removeHighlight(self.tiles[self.pieceSelected.position])
-                    
-                    #call the change position function using the pieceSelected as the initial selection
-                    #and the button of the blank tile as the second
-                    self.changePosition(button)
-		
-		    #if piece is pawn, check to see if it reached the end of the board and should be swapped
-                    if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
-                       (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
-                        pawnSwap()
-
-                    #check the king for the player not currently moving to see if that player will be in check
-                    #for their turn (color of the other player is the opposite of the color of the currently
-                    #selected piece)
-                    if(self.pieceSelected.color == "white"):
-                        king = self.getBlackKing()
-                    else:
-                        king = self.getWhiteKing()
-
-                    #check if the player about to move is in check as a result of the move just made by the opponent
-                    if (self.kingCheck(king)):
-                        if (DEBUG):
-                            print "The king is contested!"
-                            
-                        #see if the player would be in checkmate, and end the game if they are
-                        if (self.checkMate()):
-                            pass
-
-                        #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
-                        #will modify what possibleMoves are allowed to be kept as valid
-                        self.currentPlayerContested = True
-
-                    #player is not contested, so reflect that in the boolean
-                    else:
-                        self.currentPlayerContested = False
-                        
-                    #set the pieceSelected to none and remove all indexes from the piece selected list
-                    self.pieceSelected = None
-                    self.pieceSelectedMoves = []
-                    #change the turn to the other player
-                    self.changeTurn()
-
-            #if the same piece was clicked a second time, deselect it and unhighlight everything
-            elif (secondPiece == self.pieceSelected):
-                    #remove highlight from the button holding the selected piece and possible moves
-                    self.removeHighlight(self.tiles[self.pieceSelected.position])
-
-                    #set the piece selected to None
-                    self.pieceSelected = None
-                    self.pieceSelectedMoves = []
-                
-            #there is a piece on the second tile selected, so check to see if the piece selected
-            #is in the valid range of pieceSelectedMoves
-            elif (secondPiece.position in self.pieceSelectedMoves):
-                #remove highlight from the button holding the selected piece and possible moves
-                self.removeHighlight(self.tiles[self.pieceSelected.position])
-
-                #call the overtake function to remove the second piece from play and place it on
-                #the column where it belongs
-                self.overtake(secondPiece)
-
-                #change the position of the moving piece to that of the one being overtaken
-                self.changePosition(button)
-
-                #if piece is pawn, check to see if it reached the end of the board and should be swapped
-                if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
-                    (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
-                    pawnSwap()
-
-                #check the king for the player not currently moving to see if that player will be in check
-                #for their turn (color of the other player is the opposite of the color of the currently
-                #selected piece)
-                if(self.pieceSelected.color == "white"):
-                    king = self.getBlackKing()
-                else:
-                    king = self.getWhiteKing()
-
-                #check if the player about to move is in check as a result of the move just made by the opponent
-                if (self.kingCheck(king)):
-                    if (DEBUG):
-                        print "The king is contested!"
-                        
-                    #see if the player would be in checkmate, and end the game if they are
-                    if (self.checkMate()):
-                        pass
-
-                    #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
-                    #will modify what possibleMoves are allowed to be kept as valid
-                    self.currentPlayerContested = True
-
-                #player is not contested, so reflect that in the boolean
-                else:
-                    self.currentPlayerContested = False
-
-                #set the piece selected to None
-                self.pieceSelected = None
-                self.pieceSelectedMoves = []
-                
-                #change the turn to the other player
-                self.changeTurn()
-
-            #check if the second piece selected is the same color as the first
-            elif (secondPiece.color == self.pieceSelected.color):
-                #deselect the first piece and remove all its highlights, then select the new
-                #piece and display its highlights
-
-                #remove highlight from the button holding the selected piece and possible moves
-                self.removeHighlight(self.tiles[self.pieceSelected.position])
-
-                #set the initial selected piece to the new choice
-                self.pieceSelected = secondPiece
-                self.pieceSelectedMoves = []
-                
-                #get the list of possible moves the piece can perform
-                self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
-
-                #if the player is contested, check if the possibleMoves of the selected piece
-                #would result in the player no longer being selected.
-                self.playerContested()
-
-                #add line to skip highlighting and deselect piece if no valid moves
-                if (self.pieceSelectedMoves == []):
-                    self.pieceSelected = None
-                    
-                #only highlight if there are any possible moves
-                else:
-                    #highlight the button holding the selected piece and possible moves
-                    self.highlight(self.tiles[self.pieceSelected.position])
+                        self.highlight(self.tiles[self.pieceSelected.position])
 
     
-				
-    ###############special cases
-    #if a black pawn gets to row 8 or a white pawn gets to row 1 as a result of moving,
-    #then process changing the piece
-    def pawnSwap(self):
-            pass
-
-
-    ###############end of special cases
 
     ###############king logic
 
@@ -938,11 +1017,17 @@ class Game(Frame):
         for i in range(0, len(self.discardType)):
             if (self.discardType[i] == secondarySelection.pieceType):
                 index = i
+                
+        # add to discarded pieces list
+        self.discardedPieces.append(secondarySelection)
+        
         # determine color and update parallel list
         if (secondarySelection.color == "white"):
+            self.whitePieces.remove(secondarySelection)
             self.whiteDiscard[index] += 1
             self.whiteDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.whiteDiscard[index]))
         else:
+            self.blackPieces.remove(secondarySelection)
             self.blackDiscard[index] += 1
             self.blackDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.blackDiscard[index]))    
 
