@@ -456,34 +456,29 @@ class Game(Frame):
                     pawnSwap()
 
                 #check the king for the player not currently moving to see if that player will be in check
-                    #for their turn (color of the other player is the opposite of the color of the currently
-                    #selected piece)
-                    if(self.pieceSelected.color == "white"):
-                        king = self.getBlackKing()
-                    else:
-                        king = self.getWhiteKing()
+                #for their turn (color of the other player is the opposite of the color of the currently
+                #selected piece)
+                if(self.pieceSelected.color == "white"):
+                    king = self.getBlackKing()
+                else:
+                    king = self.getWhiteKing()
 
-                    #check if the player about to move is in check as a result of the move just made by the opponent
-                    if (self.kingCheck(king)):
-                        if (DEBUG):
-                            print "The king is contested!"
-                            
-                        #see if the player would be in checkmate, and end the game if they are
-                        if (self.checkMate()):
-                            pass
-
-                        #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
-                        #will modify what possibleMoves are allowed to be kept as valid
-                        self.currentPlayerContested = True
-
-                    #player is not contested, so reflect that in the boolean
-                    else:
-                        self.currentPlayerContested = False
+                #check if the player about to move is in check as a result of the move just made by the opponent
+                if (self.kingCheck(king)):
+                    if (DEBUG):
+                        print "The king is contested!"
                         
-                    #set the pieceSelected to none
-                    self.pieceSelected = None
-                    #change the turn to the other player
-                    self.changeTurn()
+                    #see if the player would be in checkmate, and end the game if they are
+                    if (self.checkMate()):
+                        pass
+
+                    #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
+                    #will modify what possibleMoves are allowed to be kept as valid
+                    self.currentPlayerContested = True
+
+                #player is not contested, so reflect that in the boolean
+                else:
+                    self.currentPlayerContested = False
 
                 #set the piece selected to None
                 self.pieceSelected = None
@@ -707,7 +702,8 @@ class Game(Frame):
                 print "Checkmate, game over"
             return True
         else:
-            print "only check, game continues"
+            if DEBUG:
+                print "only check, game continues"
             return False
 
     #function to process the moves for a player who is currently contested
