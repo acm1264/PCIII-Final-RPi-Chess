@@ -6,7 +6,7 @@
 
 from Tkinter import *
 
-DEBUG = True
+DEBUG = False
 
 class Menu(Frame):
     def __init__(self, master):
@@ -30,20 +30,18 @@ class Game(Frame):
         #stores pieces in play
         self.blackPieces = []
         self.whitePieces = []
+        
         #stores discard pieces
         #type:number discarded
-        self.discardType = ["King", "Queen", "Bishop", "Knight", "Rook", "Pawn"]
-        self.whiteDiscard = [0, 0, 0, 0, 0, 0]
-        self.blackDiscard = [0, 0, 0, 0, 0, 0]
-
+        self.discardType = ["Queen", "Bishop", "Knight", "Rook", "Pawn"]
+        self.whiteDiscard = [0, 0, 0, 0, 0]
+        self.blackDiscard = [0, 0, 0, 0, 0]
+        
+        #dictionaries to hold labels for discard panel
         self.blackDiscardLabels = {}
         self.whiteDiscardLabels = {}
-
         self.discardedPieces = []
         
-        #make instances of the Player class for each color to store in instance variables for the Game class
-        self.blackPlayer = Player("black", 0)
-        self.whitePlayer = Player("white", 0)
         #variable to hold value of if a piece is already highlighted (for process function to utilize) (maybe make it
         #hold the piece instance itself, where the process function can check if the variable is None to see if it is 
         #not holding a piece)
@@ -266,49 +264,45 @@ class Game(Frame):
         dBlackLabel = Label(self.master, text = "Black", font = ("TkDefaultFont", 12))
         dBlackLabel.grid(row = 2, column = 11)
 
+        #text to hold the number of each piece type discarded for the white player
         i = 3
         for p in range(0, len(self.discardType)):
             self.whiteDiscardLabels[self.discardType[p]] = Label(self.master, text = "x{}".format(self.whiteDiscard[p]), font = ("TkDefaultFont",12))
             self.whiteDiscardLabels[self.discardType[p]].grid(row = i, column = 9)
             i += 1
 
-        # add discard images
-        # can probably be made more efficient
-        img = discardKing
-        dKing = Button(self.master, bg = "grey", bd = 1, image = img)
-        dKing.grid(row = 3, column = 10)
-        dKing.config(command = lambda: self.process(dKing))
-        
-        img = discardQueen
-        dQueen = Button(self.master, bg = "grey", bd = 1, image = img)
-        dQueen.grid(row = 4, column = 10)
-        dQueen.config(command = lambda:  self.process(dQueen))
-
-        img = discardBishop
-        dBishop = Button(self.master, bg = "grey", bd = 1, image = img)
-        dBishop.grid(row = 5, column = 10)
-        dBishop.config(command = lambda: self.process(dBishop))
-
-        img = discardKnight
-        dKnight = Button(self.master, bg = "grey", bd = 1, image = img)
-        dKnight.grid(row = 6, column = 10)
-        dKnight.config(command = lambda: self.process(dKnight))
-
-        img = discardRook
-        dRook = Button(self.master, bg = "grey", bd = 1, image = img)
-        dRook.grid(row = 7, column = 10)
-        dRook.config(command = lambda: self.process(dRook))
-
-        img = discardPawn
-        dPawn = Button(self.master, bg = "grey", bd = 1, image = img)
-        dPawn.grid(row = 8, column = 10)
-        dPawn.config(command = lambda: self.process(dPawn))
-
+        #text to hold the number of each piece type discarded for the black player
         i = 3
         for p in range(0, len(self.discardType)):
             self.blackDiscardLabels[self.discardType[p]] = Label(self.master, text = "x{}".format(self.blackDiscard[p]), font = ("TkDefaultFont",12))
             self.blackDiscardLabels[self.discardType[p]].grid(row = i, column = 11)
             i += 1
+
+        # add discard images
+        img = discardQueen
+        dQueen = Button(self.master, bg = "grey", bd = 1, image = img)
+        dQueen.grid(row = 3, column = 10)
+        dQueen.config(command = lambda:  self.process(dQueen))
+
+        img = discardBishop
+        dBishop = Button(self.master, bg = "grey", bd = 1, image = img)
+        dBishop.grid(row = 4, column = 10)
+        dBishop.config(command = lambda: self.process(dBishop))
+
+        img = discardKnight
+        dKnight = Button(self.master, bg = "grey", bd = 1, image = img)
+        dKnight.grid(row = 5, column = 10)
+        dKnight.config(command = lambda: self.process(dKnight))
+
+        img = discardRook
+        dRook = Button(self.master, bg = "grey", bd = 1, image = img)
+        dRook.grid(row = 6, column = 10)
+        dRook.config(command = lambda: self.process(dRook))
+
+        img = discardPawn
+        dPawn = Button(self.master, bg = "grey", bd = 1, image = img)
+        dPawn.grid(row = 7, column = 10)
+        dPawn.config(command = lambda: self.process(dPawn))
     
         
     #instantiate all pieces (black and white) and the two players    
@@ -379,7 +373,8 @@ class Game(Frame):
             #if there is a piece selected, remove the highlights from it and all possible moves 
             if (self.pieceSelected != None):
                 self.highlight(self.tiles[self.pieceSelected.position])
-    
+
+
     #function to allow Buttons to be processed after being clicked (NOTE: this function processes a button being
     #pressed, so it takes a button as the input, not the piece, though the piece and button have the same coordinate
     #so a function can be made to return the piece based on the button)
@@ -388,24 +383,42 @@ class Game(Frame):
         #if a pawn swap is currenly in place, it must be finished before any other
         #processes can be handled (must select a piece to swap with
         if (self.pawnSwap):
+            #go through and see if the button selected is in column 10 first (all discard buttons are there)
             if (int(button.grid_info()["column"]) == 10):
+                #because the button clicked is in the correct column, get the row value to check which piece
+                #the player is trying to gain
                 row = int(button.grid_info()["row"])
+                #hold the position of the pawn in case it is needed to swap with another piece
                 pawnPosition = self.pieceSelected.position
+
+                #queen button is selected, so swap the pawn with a new Queen instance
                 if(self.discardType[row-3] == "Queen"):
+                    #overtake the pawn to remove it from the board first
                     self.overtake(self.pieceSelected)
+                    #confirm whose turn it is to see what color queen to add
                     if (self.currentTurn == "white"):
+                        #add a queen instance to the white pieces list
                         piece = Queen(whiteQueen, "white", pawnPosition)
                         self.whitePieces.append(piece)
+                        #place the queen appropriately on the board (image on the tile and
+                        #give the piece the appropriate position)
                         self.tiles[pawnPosition].configure(image = piece.image)
                         piece.updatePiecePosition(pawnPosition)
+                        #set pawn swap to false to indicate the swap was successfully completed
                         self.pawnSwap = False
                     else:
+                        #add a queen instance to the black pieces list
                         piece = Queen(blackQueen, "black", pawnPosition)
                         self.blackPieces.append(piece)
+                        #place the queen appropriately on the board (image on the tile and
+                        #give the piece the appropriate position)
                         self.tiles[pawnPosition].configure(image = piece.image)
                         piece.updatePiecePosition(pawnPosition)
+                        #set pawn swap to false to indicate the swap was successfully completed
                         self.pawnSwap = False
 
+                #bishop button is selected, so swap the pawn with a bishop using similar logic to
+                #how it worked for the queen
                 elif(self.discardType[row-3] == "Bishop"):
                     self.overtake(self.pieceSelected)
                     if (self.currentTurn == "white"):
@@ -421,6 +434,8 @@ class Game(Frame):
                         piece.updatePiecePosition(pawnPosition)
                         self.pawnSwap = False
 
+                #knight button is selected, so swap the pawn with a knight using similar logic to
+                #how it worked for the queen
                 elif(self.discardType[row-3] == "Knight"):
                     self.overtake(self.pieceSelected)
                     if (self.currentTurn == "white"):
@@ -436,6 +451,8 @@ class Game(Frame):
                         piece.updatePiecePosition(pawnPosition)
                         self.pawnSwap = False
 
+                #rook button is selected, so swap the pawn with a rook using similar logic to
+                #how it worked for the queen
                 elif(self.discardType[row-3] == "Rook"):
                     self.overtake(self.pieceSelected)
                     if (self.currentTurn == "white"):
@@ -675,9 +692,156 @@ class Game(Frame):
                         #highlight the button holding the selected piece and possible moves
                         self.highlight(self.tiles[self.pieceSelected.position])
 
-    
 
-    ###############king logic
+    #below are functions for the Game class utilized by the process function
+                        
+    #change the current turn to the opposite player
+    def changeTurn(self):
+        if (self.currentTurn == "white"):
+            self.currentTurn = "black"
+        else:
+            self.currentTurn = "white"
+    
+    #function to return the coordinate of the inputted button as a row-column pair
+    def buttonPosition(self, button):
+        row = int(button.grid_info()["row"])
+        column = int(button.grid_info()["column"])
+        return (row*10 + column)
+            
+    #function to return the piece at the same coordinate as the inputted button
+    def getPiece(self, button):
+        #get the position coordinate of the button
+        bPosition = self.buttonPosition(button)
+
+        #loop through all black pieces to see if one is at the same
+        #position as the button
+        for i in range (len(self.blackPieces)):
+            if (self.blackPieces[i].position == bPosition):
+                #return the piece at the button's position
+                return self.blackPieces[i]
+
+        #loop through all white pieces to see if one is at the same
+        #position as the button
+        for i in range (len(self.whitePieces)):
+            if (self.whitePieces[i].position == bPosition):
+                #return the piece at the button's position
+                return self.whitePieces[i]
+            
+        #no piece was found, so return None
+        return None
+        
+    #change position of the piece to the newly chosen coordinate (initial selection is the pieceSelected instance of the piece
+    #class, while the secondary selection is the button of the second spot selected)
+    def changePosition(self, secondButton):
+        #get the piece (if any)
+        secondPiece = self.getPiece(secondButton)
+
+        #blank tile, so simply move the initial selection to the secondary location, updating the pictures for both
+        if (secondPiece == None):
+            #set the button at the coordinate with the piece to have a blank image
+            self.tiles[self.pieceSelected.position].configure(image = blank)
+
+            #get the position of the blank button
+            button2Position = self.buttonPosition(secondButton)
+            
+            #set the button with the blank to have the image of the piece
+            self.tiles[button2Position].configure(image = self.pieceSelected.image)
+            #update the piece instance to have the correct position (including row and column)
+            self.pieceSelected.updatePiecePosition(button2Position)
+			
+	    #check for special case of pawn's first move (if it was the first move for a pawn
+            if (self.pieceSelected.image == blackPawn or self.pieceSelected.image == whitePawn):
+                if (self.pieceSelected.firstMove == True):
+                    self.pieceSelected.firstMove = False
+    
+    #function to overtake piece (the changePosition function could have logic to check if a piece is already inhabiting
+    #the tile and call this function for the piece being overtaken to remove it)
+    def overtake(self, secondarySelection):
+        secondarySelection.updatePiecePosition(00)
+        self.updateDiscard(secondarySelection)
+
+    # function that increments discarded piece count based on a given image and value
+    def updateDiscard(self, secondarySelection):
+        # find the piece type index to update the parallel list
+        for i in range(0, len(self.discardType)):
+            if (self.discardType[i] == secondarySelection.pieceType):
+                index = i
+                
+        # add to discarded pieces list
+        self.discardedPieces.append(secondarySelection)
+        
+        # determine color and update parallel list
+        if (secondarySelection.color == "white"):
+            self.whitePieces.remove(secondarySelection)
+            self.whiteDiscard[index] += 1
+            self.whiteDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.whiteDiscard[index]))
+        else:
+            self.blackPieces.remove(secondarySelection)
+            self.blackDiscard[index] += 1
+            self.blackDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.blackDiscard[index]))    
+
+    # function that counts down and updates player timers on a loop
+    def countdown(self):
+        # counts down selected player's timer
+        if (self.currentTurn == "white"):
+            self.p1Time -= 1
+            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)))
+             
+        else:
+            self.p2Time -= 1
+            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)))
+            
+        # loops the function every second
+        self.after(1000, self.countdown)
+
+    #function to display whose turn it is currently
+    def displayTurn(self):
+        if (self.currentTurn == "white"):
+            self.p1Turn.config(bg = "red", text = "Your Turn")
+            self.p2Turn.config(bg = "SystemButtonFace", text = "")
+            
+        else:
+            self.p1Turn.config(bg = "SystemButtonFace", text = "")
+            self.p2Turn.config(bg = "blue", text = "Your Turn")
+
+        # loops the function every millisecond
+        self.after(1, self.displayTurn)
+
+
+    ########highlight buttons as needed with these functions
+        
+    #highlight initially selected piece green, and all possible moves
+    #yellow (blank) or red (occupied)
+    def highlight(self, button):
+        #highligh initial selection
+        button.config(bg = "green")
+
+        #only highlight all tiles if checkbox active
+        if (self.highlightActive):
+            #highlight all possible moves
+            for i in self.pieceSelectedMoves:
+                #if no piece on the specified tile, highlight yellow
+                if (self.getPiece(self.tiles[i]) == None):
+                    self.tiles[i].config(bg = "yellow")
+
+                #else highlight red (overtake color)
+                else:
+                    self.tiles[i].config(bg = "red")
+
+    #remove all highlights (located on the initially selected button
+    #and all possible move buttons) (grey is unhighlighted color)
+    def removeHighlight(self, button):
+        #unhighlight initial selection
+        button.config(bg = "grey")
+
+        #unhighlight all possible moves
+        for i in self.pieceSelectedMoves:
+            self.tiles[i].config(bg = "grey")
+                
+    ########end of highlight functions
+            
+
+    #################################################################################king logic
 
     #function to return the piece instance of the black king
     def getBlackKing(self):
@@ -881,18 +1045,8 @@ class Game(Frame):
                     + "possible moves: {}".format(self.pieceSelectedMoves)
 
     #function to determine if a specified move is valid to make the king no longer be in check
-    #(only called if the player is already known to be in check)
+    #or to make sure a move would not make the player put themselves into check
     def invalidUncheckMove(self, move):
-        ######possible way to implement: change the position (not the image on the tile, just position
-        ######value held by th ecurrent piece) to the possible move location, holding original position
-        ######in a temporary local variable. Then call the kingCheck function for the king of the same
-        ######color as the player whose turn it is. If true is returned, then the move would result in
-        ######check and so this function should (after updating the piece back to its original position)
-        ######return false. Otherwise, still update the position to the original but return true because
-        ######the move is valid. ((((also need to take into account if there is a piece being overtaken by
-        ######removing its position entirely so it won't interfere in calculations))))
-
-
         if DEBUG:
             print "Move in question: {}".format(move)
             
@@ -948,175 +1102,7 @@ class Game(Frame):
             
             
 
-    ##############end of king functions
-    
-    ########highlight buttons as needed with these functions
-    
-    #highlight initially selected piece green, and all possible moves
-    #yellow (blank) or red (occupied)
-    def highlight(self, button):
-        #highligh initial selection
-        button.config(bg = "green")
-
-        #only highlight all tiles if checkbox active
-        if (self.highlightActive):
-            #highlight all possible moves
-            for i in self.pieceSelectedMoves:
-                #if no piece on the specified tile, highlight yellow
-                if (self.getPiece(self.tiles[i]) == None):
-                    self.tiles[i].config(bg = "yellow")
-
-                #else highlight red (overtake color)
-                else:
-                    self.tiles[i].config(bg = "red")
-
-    #remove all highlights (located on the initially selected button
-    #and all possible move buttons) (grey is unhighlighted color)
-    def removeHighlight(self, button):
-        #unhighlight initial selection
-        button.config(bg = "grey")
-
-        #unhighlight all possible moves
-        for i in self.pieceSelectedMoves:
-            self.tiles[i].config(bg = "grey")
-        
-                
-    ########end of highlight functions
-
-    #change the current turn to the opposite player
-    def changeTurn(self):
-        if (self.currentTurn == "white"):
-            self.currentTurn = "black"
-        else:
-            self.currentTurn = "white"
-    
-    #function to return the coordinate of the inputted button as a row-column pair
-    def buttonPosition(self, button):
-        row = int(button.grid_info()["row"])
-        column = int(button.grid_info()["column"])
-        return (row*10 + column)
-            
-    #function to return the piece at the same coordinate as the inputted button
-    def getPiece(self, button):
-        #get the position coordinate of the button
-        bPosition = self.buttonPosition(button)
-
-        #loop through all black pieces to see if one is at the same
-        #position as the button
-        for i in range (len(self.blackPieces)):
-            if (self.blackPieces[i].position == bPosition):
-                #return the piece at the button's position
-                return self.blackPieces[i]
-
-        #loop through all white pieces to see if one is at the same
-        #position as the button
-        for i in range (len(self.whitePieces)):
-            if (self.whitePieces[i].position == bPosition):
-                #return the piece at the button's position
-                return self.whitePieces[i]
-            
-        #no piece was found, so return None
-        return None
-        
-    #change position of the piece to the newly chosen coordinate (initial selection is the pieceSelected instance of the piece
-    #class, while the secondary selection is the button of the second spot selected)
-    def changePosition(self, secondButton):
-        #get the piece (if any)
-        secondPiece = self.getPiece(secondButton)
-
-        #blank tile, so simply move the initial selection to the secondary location, updating the pictures for both
-        if (secondPiece == None):
-            #set the button at the coordinate with the piece to have a blank image
-            self.tiles[self.pieceSelected.position].configure(image = blank)
-
-            #get the position of the blank button
-            button2Position = self.buttonPosition(secondButton)
-            
-            #set the button with the blank to have the image of the piece
-            self.tiles[button2Position].configure(image = self.pieceSelected.image)
-            #update the piece instance to have the correct position (including row and column)
-            self.pieceSelected.updatePiecePosition(button2Position)
-			
-	    #check for special case of pawn's first move (if it was the first move for a pawn
-            if (self.pieceSelected.image == blackPawn or self.pieceSelected.image == whitePawn):
-                if (self.pieceSelected.firstMove == True):
-                    self.pieceSelected.firstMove = False
-    
-    #function to overtake piece (the changePosition function could have logic to check if a piece is already inhabiting
-    #the tile and call this function for the piece being overtaken to remove it)
-    def overtake(self, secondarySelection):
-        secondarySelection.updatePiecePosition(00)
-        self.updateDiscard(secondarySelection)
-
-    # function that increments discarded piece count based on a given image and value
-    def updateDiscard(self, secondarySelection):
-        # find the piece type index to update the parallel list
-        for i in range(0, len(self.discardType)):
-            if (self.discardType[i] == secondarySelection.pieceType):
-                index = i
-                
-        # add to discarded pieces list
-        self.discardedPieces.append(secondarySelection)
-        
-        # determine color and update parallel list
-        if (secondarySelection.color == "white"):
-            self.whitePieces.remove(secondarySelection)
-            self.whiteDiscard[index] += 1
-            self.whiteDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.whiteDiscard[index]))
-        else:
-            self.blackPieces.remove(secondarySelection)
-            self.blackDiscard[index] += 1
-            self.blackDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.blackDiscard[index]))    
-
-    # function that counts down and updates player timers on a loop
-    def countdown(self):
-        # counts down selected player's timer
-        if (self.currentTurn == "white"):
-            self.p1Time -= 1
-            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)))
-             
-        else:
-            self.p2Time -= 1
-            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)))
-            
-        # loops the function every second
-        self.after(1000, self.countdown)
-
-    #function to display whose turn it is currently
-    def displayTurn(self):
-        if (self.currentTurn == "white"):
-            self.p1Turn.config(bg = "red", text = "Your Turn")
-            self.p2Turn.config(bg = "SystemButtonFace", text = "")
-            
-        else:
-            self.p1Turn.config(bg = "SystemButtonFace", text = "")
-            self.p2Turn.config(bg = "blue", text = "Your Turn")
-
-        # loops the function every millisecond
-        self.after(1, self.displayTurn)
-
-#Player class: inherits from Game, to be instantiated twice to make the two players
-class Player(Game):
-        def __init__(self, color, moveNumber):
-                #string variable to hold which color a player corresponds to (only black or white)
-                self.color = color
-                #integer to hold what current move the player is on
-                self.moveNumber = moveNumber
-                
-        #accessors and mutators for Player class variables
-        @property
-        def color(self):
-                return self._color
-        @color.setter
-        def color(self, value):
-                self._color = value
-                
-        @property
-        def moveNumber(self):
-                return self._moveNumber
-        @moveNumber.setter
-        def moveNumber(self, value):
-                self._moveNumber = value
+    #################################################################################end of king functions
 
 
 #Piece class: biggest class in center of program, (need to implement "hasa" relationship under Tile and Player classes
@@ -1124,8 +1110,6 @@ class Player(Game):
 class Piece(Game):
     #instance variables for piece class
     def __init__(self, image, color, position):
-        #all pieces will be in play by default until overtaken
-        self.inPlay = True
         #have image stored with the instance for easy correlation between the piece and the button holding the image
         self.image = image
         #define what color the piece is
@@ -1136,7 +1120,7 @@ class Piece(Game):
         self.row = self.position / 10
         self.column = self.position % 10
 
-	#accessors and mutators for position, row, and column
+    #accessors and mutators for position, row, and column
     @property
     def position(self):
         return self._position
@@ -1196,7 +1180,7 @@ class Piece(Game):
             return False
 
     #function to hold the movement logic for both the bishop and rook to reduce copied code
-    def bishopAndRookMovementLogic(self, moves, r, c):
+    def bishopAndRookLogic(self, moves, r, c):
         #stay in loop until invalid tile reached (or manual break)
         while (self.isValidTile(self.row + r, self.column + c, self.color)):
             #append the next move to the moves list
@@ -1223,13 +1207,13 @@ class Piece(Game):
         #call function using values to modify row and column in each direction and append possible
         #moves to the possible moves list
         #move SE
-        moves = self.bishopAndRookMovementLogic(moves, 1, 1)
+        moves = self.bishopAndRookLogic(moves, 1, 1)
         #move SW
-        moves = self.bishopAndRookMovementLogic(moves, 1, -1)
+        moves = self.bishopAndRookLogic(moves, 1, -1)
         #move NE
-        moves = self.bishopAndRookMovementLogic(moves, -1, 1)
+        moves = self.bishopAndRookLogic(moves, -1, 1)
         #move NW
-        moves = self.bishopAndRookMovementLogic(moves, -1, -1)
+        moves = self.bishopAndRookLogic(moves, -1, -1)
         
         return moves
 	
@@ -1240,43 +1224,28 @@ class Piece(Game):
         #call function using values to modify row and column in each direction and append possible
         #moves to the possible moves list
         #move up(up screen is negative y direction)
-        moves = self.bishopAndRookMovementLogic(moves, -1, 0)
+        moves = self.bishopAndRookLogic(moves, -1, 0)
         #move down screen, positive y
-        moves = self.bishopAndRookMovementLogic(moves, 1, 0)
+        moves = self.bishopAndRookLogic(moves, 1, 0)
         #move left
-        moves = self.bishopAndRookMovementLogic(moves, 0, -1)
+        moves = self.bishopAndRookLogic(moves, 0, -1)
         #move right
-        moves = self.bishopAndRookMovementLogic(moves, 0, 1)
+        moves = self.bishopAndRookLogic(moves, 0, 1)
 
         return moves
     
-    #####instead of having variables for initial and secondary select here, we may need to implement a system to work in conjunction
-    #####with the GUI, where the play function in the Game class can take the tile clicked and call the possibleMoves function of 
-    #####the appropriate piece
 #All the individual types of pieces have classes defined below (concrete functions)
 #King class
 class King(Piece):
     #utilize the Piece class constructor, in addition to the contested variable (False by default)
     pieceType = "King"
     def __init__(self, image, color, position):
-        #King only, if in check, the move options will be limited for the Player's next turn
-        self.contested = False
         Piece.__init__(self, image, color, position)
-        
-        @property
-        def contested (self):
-            return self._contested
-        @contested.setter
-        def contested(self, value):
-            self._contested = value
+
     
     #function to determine the possible moves a piece can make (takes contested state into account as well, but can be accessed
     #using self.contested when needed)
     def possibleMoves(self):
-        ##########################needs to be updated to take into account limiting the moves based on if the player
-        ##########################is contested or would become contested from a certain move (maybe have a condition
-        ##########################in the isValidTile, or have a seperate isValidTile for the King specifically 
-        ##########################because the logic may get to be complex
         moves = []
         #double for loop to determine list of moves
         #outer for loop to iterate through row values (-1, 0, 1), and same thing for columns in inner loop
@@ -1291,7 +1260,6 @@ class King(Piece):
         #return the list of possible moves
         return moves
     
-    
 #Queen class
 class Queen(Piece):
     pieceType = "Queen"
@@ -1303,7 +1271,6 @@ class Queen(Piece):
     def possibleMoves(self):
         #queen moves = rook moves + bishop moves
         return self.rookPossibleMoves() + self.bishopPossibleMoves()
-    
     
 #Rook class
 class Rook(Piece):
@@ -1317,7 +1284,6 @@ class Rook(Piece):
         #call the function for rookPossibleMoves in the Pieces class and return the result
         return self.rookPossibleMoves()
     
-    
 #Bishop class
 class Bishop(Piece):
     pieceType = "Bishop"
@@ -1329,7 +1295,6 @@ class Bishop(Piece):
     def possibleMoves(self):
         #call the function for bishopPossibleMoves in the Pieces class and return the result
         return self.bishopPossibleMoves()
-      
         
 #Knight class
 class Knight(Piece):
@@ -1356,7 +1321,6 @@ class Knight(Piece):
                             
         #return the list of all valid moves
         return moves
-    
     
 #Pawn class
 class Pawn(Piece):
@@ -1437,7 +1401,6 @@ blackBishop = PhotoImage(file = "images/blackBishop.gif")
 blackKnight = PhotoImage(file = "images/blackKnight.gif")
 blackRook = PhotoImage(file = "images/blackRook.gif")
 blackPawn = PhotoImage(file = "images/blackPawn.gif")
-discardKing = PhotoImage(file = "images/discardKing.gif")
 discardQueen = PhotoImage(file = "images/discardQueen.gif")
 discardBishop = PhotoImage(file = "images/discardBishop.gif")
 discardKnight = PhotoImage(file = "images/discardKnight.gif")
