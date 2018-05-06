@@ -384,69 +384,106 @@ class Game(Frame):
     #pressed, so it takes a button as the input, not the piece, though the piece and button have the same coordinate
     #so a function can be made to return the piece based on the button)
     def process(self, button):
+
+        #if a pawn swap is currenly in place, it must be finished before any other
+        #processes can be handled (must select a piece to swap with
         if (self.pawnSwap):
             if (int(button.grid_info()["column"]) == 10):
                 row = int(button.grid_info()["row"])
-                if(self.discardType[row-3] != "Pawn"):
+                pawnPosition = self.pieceSelected.position
+                if(self.discardType[row-3] == "Queen"):
+                    self.overtake(self.pieceSelected)
                     if (self.currentTurn == "white"):
-                        if (self.whiteDiscard[row-3] > 0 ):
-                            for piece in self.discardedPieces:
-                                if (piece.color == self.currentTurn and piece.pieceType == self.discardType[row-3]):
-                                    pawnPosition = self.pieceSelected.position
-                                    self.overtake(self.pieceSelected)
-                                    self.tiles[pawnPosition].configure(image = piece.image)
-                                    piece.updatePiecePosition(pawnPosition)
-                                    self.whiteDiscard[row-3] -= 1
-                                    self.whitePieces.append(piece)
-                                    self.discardedPieces.remove(piece)
-                                    self.pawnSwap = False
-                                    break
+                        piece = Queen(whiteQueen, "white", pawnPosition)
+                        self.whitePieces.append(piece)
+                        self.tiles[pawnPosition].configure(image = piece.image)
+                        piece.updatePiecePosition(pawnPosition)
+                        self.pawnSwap = False
                     else:
-                        if (self.blackDiscard[row-3] > 0 ):
-                            for piece in self.discardedPieces:
-                                if (piece.color == self.currentTurn and piece.pieceType == self.discardType[row-3]):
-                                    pawnPosition = self.pieceSelected.position
-                                    self.overtake(self.pieceSelected)
-                                    self.tiles[pawnPosition].configure(image = piece.image)
-                                    piece.updatePiecePosition(pawnPosition)
-                                    self.pieceDiscard[row-3] -= 1
-                                    self.piecePieces.append(piece)
-                                    self.discardedPieces.remove(piece)
-                                    self.pawnSwap = False
-                                    break
+                        piece = Queen(blackQueen, "black", pawnPosition)
+                        self.blackPieces.append(piece)
+                        self.tiles[pawnPosition].configure(image = piece.image)
+                        piece.updatePiecePosition(pawnPosition)
+                        self.pawnSwap = False
 
-                    if (not self.pawnSwap):
-                        #check the king for the player not currently moving to see if that player will be in check
-                            #for their turn (color of the other player is the opposite of the color of the currently
-                            #selected piece)
-                            if(self.pieceSelected.color == "white"):
-                                king = self.getBlackKing()
-                            else:
-                                king = self.getWhiteKing()
+                elif(self.discardType[row-3] == "Bishop"):
+                    self.overtake(self.pieceSelected)
+                    if (self.currentTurn == "white"):
+                        piece = Bishop(whiteBishop, "white", pawnPosition)
+                        self.whitePieces.append(piece)
+                        self.tiles[pawnPosition].configure(image = piece.image)
+                        piece.updatePiecePosition(pawnPosition)
+                        self.pawnSwap = False
+                    else:
+                        piece = Bishop(blackBishop, "black", pawnPosition)
+                        self.blackPieces.append(piece)
+                        self.tiles[pawnPosition].configure(image = piece.image)
+                        piece.updatePiecePosition(pawnPosition)
+                        self.pawnSwap = False
 
-                            #check if the player about to move is in check as a result of the move just made by the opponent
-                            if (self.kingCheck(king)):
-                                if (DEBUG):
-                                    print "The king is contested!"
-                                    
-                                #see if the player would be in checkmate, and end the game if they are
-                                if (self.checkMate()):
-                                    pass
+                elif(self.discardType[row-3] == "Knight"):
+                    self.overtake(self.pieceSelected)
+                    if (self.currentTurn == "white"):
+                        piece = Knight(whiteKnight, "white", pawnPosition)
+                        self.whitePieces.append(piece)
+                        self.tiles[pawnPosition].configure(image = piece.image)
+                        piece.updatePiecePosition(pawnPosition)
+                        self.pawnSwap = False
+                    else:
+                        piece = Knight(blackKnight, "black", pawnPosition)
+                        self.blackPieces.append(piece)
+                        self.tiles[pawnPosition].configure(image = piece.image)
+                        piece.updatePiecePosition(pawnPosition)
+                        self.pawnSwap = False
 
-                                #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
-                                #will modify what possibleMoves are allowed to be kept as valid
-                                self.currentPlayerContested = True
+                elif(self.discardType[row-3] == "Rook"):
+                    self.overtake(self.pieceSelected)
+                    if (self.currentTurn == "white"):
+                        piece = Rook(whiteRook, "white", pawnPosition)
+                        self.whitePieces.append(piece)
+                        self.tiles[pawnPosition].configure(image = piece.image)
+                        piece.updatePiecePosition(pawnPosition)
+                        self.pawnSwap = False
+                    else:
+                        piece = Rook(blackRook, "black", pawnPosition)
+                        self.blackPieces.append(piece)
+                        self.tiles[pawnPosition].configure(image = piece.image)
+                        piece.updatePiecePosition(pawnPosition)
+                        self.pawnSwap = False 
 
-                            #player is not contested, so reflect that in the boolean
-                            else:
-                                self.currentPlayerContested = False
+            #check if pawn swap already occured during this passthrough
+            if (not self.pawnSwap):
+                #check the king for the player not currently moving to see if that player will be in check
+                #for their turn (color of the other player is the opposite of the color of the currently
+                #selected piece)
+                if(self.pieceSelected.color == "white"):
+                    king = self.getBlackKing()
+                else:
+                    king = self.getWhiteKing()
 
-                            #set the piece selected to None
-                            self.pieceSelected = None
-                            self.pieceSelectedMoves = []
-                            
-                            #change the turn to the other player
-                            self.changeTurn()
+                #check if the player about to move is in check as a result of the move just made by the opponent
+                if (self.kingCheck(king)):
+                    if (DEBUG):
+                        print "The king is contested!"
+                        
+                    #see if the player would be in checkmate, and end the game if they are
+                    if (self.checkMate()):
+                        pass
+
+                    #in check, but not checkmate. set currentPlayerContested to True to reflect this, which
+                    #will modify what possibleMoves are allowed to be kept as valid
+                    self.currentPlayerContested = True
+
+                #player is not contested, so reflect that in the boolean
+                else:
+                    self.currentPlayerContested = False
+
+                #set the piece selected to None
+                self.pieceSelected = None
+                self.pieceSelectedMoves = []
+                
+                #change the turn to the other player
+                self.changeTurn()
         else:
             #check if a piece has already been selected
             if (self.pieceSelected == None):
