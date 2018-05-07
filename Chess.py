@@ -244,12 +244,16 @@ class Game(Frame):
         self.timer2.grid(row = 0, column = 6, columnspan = 3, sticky = E)
 
         
-        # instruction side panel
-        instructions = Label(self.master, text = "\nInstructions", font = ("TkDefaultFont", 12), width = 22)
-        instructions.grid(row = 0, rowspan = 8, column = 0, sticky = N)
+        # information side panel
+        #make the label saying "Information"
+        infoTitle = Label(self.master, text = "\nInformation", font = ("Courier", 18), width = 22)
+        infoTitle.grid(row = 0, rowspan = 8, column = 0, sticky = N)
+        #make the place for the actual information to display. Set to the string for the white player's turn to start with
+        self.information = Label(self.master, text = "Player One's turn.\nSelect a white piece to move.", font = ("TkDefaultFont", 12), width = 22, bg = "red")
+        self.information.grid(row = 1, rowspan = 8, column = 0)
         
         # highlight checkbutton
-        self.highlightBox = Checkbutton(self.master, text = "Highlight?", font = ("TkDefaultFont", 12), command = lambda: self.highlightCheck())
+        self.highlightBox = Checkbutton(self.master, text = "Highlight?", font = ("Courier", 12), command = lambda: self.highlightCheck())
         self.highlightBox.grid(row = 9, column = 0)
         #set the button to on by default
         self.highlightBox.select()
@@ -368,7 +372,8 @@ class Game(Frame):
                 
 
         else:
-            print "the button is inactive, so turn it on"
+            if DEBUG:
+                print "the button is inactive, so turn it on"
             self.highlightActive = True
             #if there is a piece selected, remove the highlights from it and all possible moves 
             if (self.pieceSelected != None):
@@ -501,6 +506,10 @@ class Game(Frame):
                 
                 #change the turn to the other player
                 self.changeTurn()
+
+                #make the text in the info pannel reference the player being in check (if applicable)
+                if (self.currentPlayerContested):
+                    self.information.config(text = "You are in Check!\nYou must move a piece\nto exit this state.")
         else:
             #check if a piece has already been selected
             if (self.pieceSelected == None):
@@ -526,11 +535,15 @@ class Game(Frame):
                         #add line to skip highlighting and deselect piece if no valid moves
                         if (self.pieceSelectedMoves == []):
                             self.pieceSelected = None
+                            #update info pannel to reflect this
+                            self.information.config(text = "You can't move that piece\nTry moving a different one.")
                         
                         #only highlight if there are any possible moves
                         if (self.pieceSelectedMoves != []):
                             #highlight the button holding the selected piece and possible moves
                             self.highlight(button)
+                            #update info pannel to reflect this
+                            self.information.config(text = "Select where you\nwill move this piece.")
 
                     #piece selected is not current player's piece, deselect pieces
                     else:
@@ -571,7 +584,8 @@ class Game(Frame):
                         if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
                            (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
                             self.pawnSwap = True
-                            # prompt user about pawnSwap in status bar
+                            # prompt user about pawnSwap in info
+                            self.information.config(text = "Click a piece in\nthe right column to\npromote your pawn to.")
                         else:
                             #check the king for the player not currently moving to see if that player will be in check
                             #for their turn (color of the other player is the opposite of the color of the currently
@@ -604,6 +618,14 @@ class Game(Frame):
                             #change the turn to the other player
                             self.changeTurn()
 
+                            #make the text in the info pannel reference the player being in check (if applicable)
+                            if (self.currentPlayerContested):
+                                self.information.config(text = "You are in Check!\nYou must move a piece\nto exit this state.")
+
+                    #invalid blank tile selected, inform player they cannot move there
+                    else:
+                        self.information.config(text = "You can't move\nyour piece there.")
+
                 #if the same piece was clicked a second time, deselect it and unhighlight everything
                 elif (secondPiece == self.pieceSelected):
                         #remove highlight from the button holding the selected piece and possible moves
@@ -612,6 +634,16 @@ class Game(Frame):
                         #set the piece selected to None
                         self.pieceSelected = None
                         self.pieceSelectedMoves = []
+                        
+                        #update info back to the default start of turn text
+                        #default text is for player being in check (if applicable)
+                        if (self.currentPlayerContested):
+                            self.information.config(text = "You are in Check!\nYou must move a piece\nto exit this state.")
+                        #player is not in check, so use basic turn start text based on the current player's turn
+                        elif (self.currentTurn == "white"):
+                            self.information.config(text = "Player One's turn.\nSelect a white piece to move.")
+                        else:
+                            self.information.config(text = "Player Two's turn.\nSelect a black piece to move.")
                     
                 #there is a piece on the second tile selected, so check to see if the piece selected
                 #is in the valid range of pieceSelectedMoves
@@ -630,7 +662,8 @@ class Game(Frame):
                     if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
                         (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
                         self.pawnSwap = True
-                        # prompt user about pawnSwap in status bar
+                        # prompt user about pawnSwap in info
+                        self.information.config(text = "Click a piece in\nthe right column to\npromote your pawn to.")
                     else:
                         #check the king for the player not currently moving to see if that player will be in check
                         #for their turn (color of the other player is the opposite of the color of the currently
@@ -664,6 +697,10 @@ class Game(Frame):
                         #change the turn to the other player
                         self.changeTurn()
 
+                        #make the text in the info pannel reference the player being in check (if applicable)
+                        if (self.currentPlayerContested):
+                            self.information.config(text = "You are in Check!\nYou must move a piece\nto exit this state.")
+
                 #check if the second piece selected is the same color as the first
                 elif (secondPiece.color == self.pieceSelected.color):
                     #deselect the first piece and remove all its highlights, then select the new
@@ -686,21 +723,32 @@ class Game(Frame):
                     #add line to skip highlighting and deselect piece if no valid moves
                     if (self.pieceSelectedMoves == []):
                         self.pieceSelected = None
+                        #update info pannel to reflect this
+                        self.information.config(text = "You can't move that piece\nTry moving a different one.")
                         
                     #only highlight if there are any possible moves
                     else:
                         #highlight the button holding the selected piece and possible moves
                         self.highlight(self.tiles[self.pieceSelected.position])
+                        #update info pannel to reflect this
+                        self.information.config(text = "Select where you\nwill move this piece.")
+
+                #piece selected cannnot be overtaken
+                else:
+                    self.information.config(text = "You can't move\nyour piece there.")
 
 
     #below are functions for the Game class utilized by the process function
                         
-    #change the current turn to the opposite player
+    #change the current turn to the opposite player, update the information text to the default
+    #saying whose turn it is
     def changeTurn(self):
         if (self.currentTurn == "white"):
             self.currentTurn = "black"
+            self.information.config(text = "Player Two's turn.\nSelect a black piece to move.")
         else:
             self.currentTurn = "white"
+            self.information.config(text = "Player One's turn.\nSelect a white piece to move.")
     
     #function to return the coordinate of the inputted button as a row-column pair
     def buttonPosition(self, button):
@@ -799,10 +847,12 @@ class Game(Frame):
         if (self.currentTurn == "white"):
             self.p1Turn.config(bg = "red", text = "Your Turn")
             self.p2Turn.config(bg = "SystemButtonFace", text = "")
+            self.information.config(bg = "red")
             
         else:
             self.p1Turn.config(bg = "SystemButtonFace", text = "")
-            self.p2Turn.config(bg = "blue", text = "Your Turn")
+            self.p2Turn.config(bg = "light blue", text = "Your Turn")
+            self.information.config(bg = "light blue")
 
         # loops the function every millisecond
         self.after(1, self.displayTurn)
