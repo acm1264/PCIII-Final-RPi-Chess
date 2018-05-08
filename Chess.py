@@ -3,10 +3,15 @@
 # Date: 5/16/18
 # Description: DOES SOME PRETTY COOL STUFF
 ######################################################
-
 from Tkinter import *
 
 DEBUG = False
+MUSIC = True
+
+#only import the pygame library if music is desired (meant for turning it off
+#during testing, or if pygame not compatable with user's device)
+if (MUSIC):
+    import pygame
 
 class Menu(Frame):
     def __init__(self, master):
@@ -1428,10 +1433,21 @@ class Pawn(Piece):
 ###################################################################
 #Main part of program
 ###################################################################
+
+#initialize pygame and the mixer for the music to work
+if MUSIC:
+    pygame.init()
+    pygame.mixer.init()
+
+#setup initial window for the main menu of the game (including playing music) 
 window2 = Tk()
 window2.title("Chess Reloaded")
 menu = Menu(window2)
 menu.setupGUI()
+if MUSIC:
+    pygame.mixer.music.load("music/menu.mp3")
+    #-1 in play makes an infinite loop of the music until it is told otherwise
+    pygame.mixer.music.play(-1)
 window2.mainloop()
 
 window = Tk()
@@ -1463,4 +1479,18 @@ game.setupGUI()
 game.setupGame()
 game.countdown()
 game.displayTurn()
+if MUSIC:
+    pygame.mixer.music.load("music/gameplay.mp3")
+    #-1 in play makes an infinite loop of the music until it is told otherwise
+    pygame.mixer.music.play(-1)
 window.mainloop()
+
+####note: once exit buttons are installed, they will need to take into account
+####turning the music off
+
+#credits for music:
+#       freesound.org:
+#               littlerobotsoundfactory jingle_win_00.wav (victory.mp3)
+#               fmceretta Racing game menu music - while buying
+#                    fancy cars we will never have!.mp3 (menu.mp3)
+#       E's Jammy Jam (gameplay.mp3)
