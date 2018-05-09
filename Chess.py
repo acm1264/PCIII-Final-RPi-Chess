@@ -1480,7 +1480,7 @@ game.setupGame()
 game.countdown()
 game.displayTurn()
 if MUSIC:
-    pygame.mixer.music.load("music/gameplay.mp3")
+    pygame.mixer.music.load("music/gameplay.ogg")
     #-1 in play makes an infinite loop of the music until it is told otherwise
     pygame.mixer.music.play(-1)
 window.mainloop()
