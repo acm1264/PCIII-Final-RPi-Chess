@@ -385,6 +385,31 @@ class Game(Frame):
                 self.highlight(self.tiles[self.pieceSelected.position])
 
 
+    #function to swap out a pawn for a piece in the discard
+    #all relevent lists are passed in by color to be updated properly
+    def swapPawn(self, colorDiscardList, colorInPlay, colorDiscardLabels, pawnPosition, row):
+        #search for a discarded piece matching the color and type of wanted piece
+        for piece in self.discardedPieces:
+            if (piece.color == self.currentTurn and piece.pieceType == self.discardType[row-3]):
+                #use overtake function to remove pawn to be swapped from the board
+                self.overtake(self.pieceSelected)
+                #update the image on tile to the proper piece color and type
+                self.tiles[pawnPosition].config(image = piece.image)
+                #update the piece position to previous pawn position
+                piece.updatePiecePosition(pawnPosition)
+                #update the discard list displayed in side panel
+                colorDiscardList[row-3] -= 1
+                #add the piece to pieces in play by color
+                colorInPlay.append(piece)
+                #remove the piece from discarded piece list
+                self.discardedPieces.remove(piece)
+                #revert pawnSwap back to false
+                self.pawnSwap = False
+                #update the discard side panel label
+                colorDiscardLabels[self.discardType[row-3]].config(text = "x{}".format(colorDiscardList[row-3]))
+                #break out of loop once properly swapped
+                break
+
     #function to allow Buttons to be processed after being clicked (NOTE: this function processes a button being
     #pressed, so it takes a button as the input, not the piece, though the piece and button have the same coordinate
     #so a function can be made to return the piece based on the button)
@@ -401,82 +426,14 @@ class Game(Frame):
                 #hold the position of the pawn in case it is needed to swap with another piece
                 pawnPosition = self.pieceSelected.position
 
-                #queen button is selected, so swap the pawn with a new Queen instance
-                if(self.discardType[row-3] == "Queen"):
-                    #overtake the pawn to remove it from the board first
-                    self.overtake(self.pieceSelected)
-                    #confirm whose turn it is to see what color queen to add
+                #ensure the piece to be swapped is not a pawn
+                if (self.discardType[row-3] != "Pawn"):
+                    #if white's turn, pass in corresponding colored lists to be updated with swapPawn()
                     if (self.currentTurn == "white"):
-                        #add a queen instance to the white pieces list
-                        piece = Queen(whiteQueen, "white", pawnPosition)
-                        self.whitePieces.append(piece)
-                        #place the queen appropriately on the board (image on the tile and
-                        #give the piece the appropriate position)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        #set pawn swap to false to indicate the swap was successfully completed
-                        self.pawnSwap = False
+                        self.swapPawn(self.whiteDiscard, self.whitePieces, self.whiteDiscardLabels, pawnPosition, row)
+                    #if black's turn, pass in corresponding colored lists to be updated with swapPawn()
                     else:
-                        #add a queen instance to the black pieces list
-                        piece = Queen(blackQueen, "black", pawnPosition)
-                        self.blackPieces.append(piece)
-                        #place the queen appropriately on the board (image on the tile and
-                        #give the piece the appropriate position)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        #set pawn swap to false to indicate the swap was successfully completed
-                        self.pawnSwap = False
-
-                #bishop button is selected, so swap the pawn with a bishop using similar logic to
-                #how it worked for the queen
-                elif(self.discardType[row-3] == "Bishop"):
-                    self.overtake(self.pieceSelected)
-                    if (self.currentTurn == "white"):
-                        piece = Bishop(whiteBishop, "white", pawnPosition)
-                        self.whitePieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False
-                    else:
-                        piece = Bishop(blackBishop, "black", pawnPosition)
-                        self.blackPieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False
-
-                #knight button is selected, so swap the pawn with a knight using similar logic to
-                #how it worked for the queen
-                elif(self.discardType[row-3] == "Knight"):
-                    self.overtake(self.pieceSelected)
-                    if (self.currentTurn == "white"):
-                        piece = Knight(whiteKnight, "white", pawnPosition)
-                        self.whitePieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False
-                    else:
-                        piece = Knight(blackKnight, "black", pawnPosition)
-                        self.blackPieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False
-
-                #rook button is selected, so swap the pawn with a rook using similar logic to
-                #how it worked for the queen
-                elif(self.discardType[row-3] == "Rook"):
-                    self.overtake(self.pieceSelected)
-                    if (self.currentTurn == "white"):
-                        piece = Rook(whiteRook, "white", pawnPosition)
-                        self.whitePieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False
-                    else:
-                        piece = Rook(blackRook, "black", pawnPosition)
-                        self.blackPieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False 
+                        self.swapPawn(self.blackDiscard, self.blackPieces, self.blackDiscardLabels, pawnPosition, row)
 
             #check if pawn swap already occured during this passthrough
             if (not self.pawnSwap):
@@ -526,29 +483,56 @@ class Game(Frame):
 
                     #check that the color of the piece selected matches the current player
                     if(self.currentTurn == self.pieceSelected.color):
-                    
-                        #get the list of possible moves the piece can perform
-                        self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
-                        if DEBUG:
-                            print "possible moves of selected piece: {}".format(self.pieceSelectedMoves)
-
-                        #if the player is contested, check if the possibleMoves of the selected piece
-                        #would result in the player no longer being selected (logic in playerContested()
-                        #function)
-                        self.playerContested()
-                            
-                        #add line to skip highlighting and deselect piece if no valid moves
-                        if (self.pieceSelectedMoves == []):
-                            self.pieceSelected = None
-                            #update info pannel to reflect this
-                            self.information.config(text = "You can't move that piece\nTry moving a different one.")
                         
-                        #only highlight if there are any possible moves
-                        if (self.pieceSelectedMoves != []):
-                            #highlight the button holding the selected piece and possible moves
-                            self.highlight(button)
-                            #update info pannel to reflect this
-                            self.information.config(text = "Select where you\nwill move this piece.")
+                        #if piece is pawn, check to see if it reached the end of the board and should be swapped
+                        row = int(button.grid_info()["row"])
+                        if((self.pieceSelected.image == whitePawn and row == 1) or\
+                           (self.pieceSelected.image == blackPawn and row == 8)):
+                            availableSwap = False
+                            if (self.pieceSelected.color == "white"):
+                                #check discard values for all pieces except the pawn
+                                for numberDiscarded in range(len(self.whiteDiscard) - 1):
+                                    if (self.whiteDiscard[numberDiscarded] != 0):
+                                        availableSwap = True
+                                        break
+                            else:
+                                for numberDiscarded in range(len(self.blackDiscard) - 1):
+                                    if (self.blackDiscard[numberDiscarded] != 0):
+                                        availableSwap = True
+                                        break
+
+                            #if there is an available swap, allow the pawn swap
+                            print availableSwap
+                            if (availableSwap == True):
+                                self.pawnSwap = True
+                                # prompt user about pawnSwap availablity in info
+                                self.information.config(text = "Click a piece in\nthe right column to\npromote your pawn to.")
+                            else:
+                                self.pieceSelected = None
+                                self.information.config(text = "Pawn swap unavailable.\nCheck after discarding a swappable piece.\nSelect another piece.")
+                        else:
+                            #get the list of possible moves the piece can perform
+                            self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
+                            if DEBUG:
+                                print "possible moves of selected piece: {}".format(self.pieceSelectedMoves)
+
+                            #if the player is contested, check if the possibleMoves of the selected piece
+                            #would result in the player no longer being selected (logic in playerContested()
+                            #function)
+                            self.playerContested()
+                                
+                            #add line to skip highlighting and deselect piece if no valid moves
+                            if (self.pieceSelectedMoves == []):
+                                self.pieceSelected = None
+                                #update info pannel to reflect this
+                                self.information.config(text = "You can't move that piece\nTry moving a different one.")
+                            
+                            #only highlight if there are any possible moves
+                            if (self.pieceSelectedMoves != []):
+                                #highlight the button holding the selected piece and possible moves
+                                self.highlight(button)
+                                #update info pannel to reflect this
+                                self.information.config(text = "Select where you\nwill move this piece.")
 
                     #piece selected is not current player's piece, deselect pieces
                     else:
@@ -586,11 +570,33 @@ class Game(Frame):
                         self.changePosition(button)
                     
                         #if piece is pawn, check to see if it reached the end of the board and should be swapped
-                        if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
-                           (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
-                            self.pawnSwap = True
-                            # prompt user about pawnSwap in info
-                            self.information.config(text = "Click a piece in\nthe right column to\npromote your pawn to.")
+                        row = int(button.grid_info()["row"])
+                        if((self.pieceSelected.image == whitePawn and row == 1) or\
+                           (self.pieceSelected.image == blackPawn and row == 8)):
+                            availableSwap = False
+                            if (self.pieceSelected.color == "white"):
+                                #check discard values for all pieces except the pawn
+                                for numberDiscarded in range(len(self.whiteDiscard) - 1):
+                                    if (self.whiteDiscard[numberDiscarded] != 0):
+                                        availableSwap = True
+                                        break
+                            else:
+                                for numberDiscarded in range(len(self.blackDiscard) - 1):
+                                    if (self.blackDiscard[numberDiscarded] != 0):
+                                        availableSwap = True
+
+                            #if there is an available swap, allow the pawn swap
+                            if (availableSwap == True):
+                                self.pawnSwap = True
+                                # prompt user about pawnSwap availablity in info
+                                self.information.config(text = "Click a piece in\nthe right column to\npromote your pawn to.")
+                            else:
+                                #set the pieceSelected to none and remove all indexes from the piece selected list
+                                self.pieceSelected = None
+                                self.pieceSelectedMoves = []
+                                #change the turn to the other player
+                                self.changeTurn()
+                                
                         else:
                             #check the king for the player not currently moving to see if that player will be in check
                             #for their turn (color of the other player is the opposite of the color of the currently
@@ -664,11 +670,33 @@ class Game(Frame):
                     self.changePosition(button)
 
                     #if piece is pawn, check to see if it reached the end of the board and should be swapped
-                    if((self.pieceSelected.image == whitePawn and self.pieceSelected.row == 1) or\
-                        (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
-                        self.pawnSwap = True
-                        # prompt user about pawnSwap in info
-                        self.information.config(text = "Click a piece in\nthe right column to\npromote your pawn to.")
+                    #if piece is pawn, check to see if it reached the end of the board and should be swapped
+                    row = int(button.grid_info()["row"])
+                    if((self.pieceSelected.image == whitePawn and row == 1) or\
+                       (self.pieceSelected.image == blackPawn and row == 8)):
+                        availableSwap = False
+                        if (self.pieceSelected.color == "white"):
+                            #check discard values for all pieces except the pawn
+                            for numberDiscarded in range(len(self.whiteDiscard) - 1):
+                                if (self.whiteDiscard[numberDiscarded] != 0):
+                                    availableSwap = True
+                                    break
+                        else:
+                            for numberDiscarded in range(len(self.blackDiscard) - 1):
+                                if (self.blackDiscard[numberDiscarded] != 0):
+                                    availableSwap = True
+
+                        #if there is an available swap, allow the pawn swap
+                        if (availableSwap == True):
+                            self.pawnSwap = True
+                            # prompt user about pawnSwap availablity in info
+                            self.information.config(text = "Click a piece in\nthe right column to\npromote your pawn to.")
+                        else:
+                            #set the pieceSelected to none and remove all indexes from the piece selected list
+                            self.pieceSelected = None
+                            self.pieceSelectedMoves = []
+                            #change the turn to the other player
+                            self.changeTurn()
                     else:
                         #check the king for the player not currently moving to see if that player will be in check
                         #for their turn (color of the other player is the opposite of the color of the currently
