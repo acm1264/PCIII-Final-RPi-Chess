@@ -20,10 +20,58 @@ if (MUSIC):
 class Menu(Frame):
     def __init__(self, master):
         self.master = master
+        self.timerType = IntVar()
+        self.timerType.set(1)
+
+    @property
+    def timerType (self):
+        return self._timerType
+    @timerType.setter
+    def timerType (self, value):
+        self._timerType = value
+
+    @property
+    def timers (self):
+        return self._timers
+    @timers.setter
+    def timers (self, value):
+        self._timers = value
 
     def setupGUI(self):
-        quitButton = Button(self.master, text = "Exit", font = ("TkDefaultFont", 20), width = 50, height = 10, command = lambda : self.master.destroy())
-        quitButton.grid(row = 0, column = 0)
+        header = Label(self.master, text = "\nWelcome to Pimaster Chess!\n", font = ("TkDefaultFont", 20), height = 2)
+        header.grid(row = 0, column = 0, padx = (40, 20))
+        info = Label(self.master, text = "Pimaster Chess is a simple python chess program created by three people: Andrew Maurice, Cody Johnson, and \
+Lindsay Cason. To the right are a couple of options. The button labeled \"Play\" will start the game. The checkbox labeled \"Timer?\" will decide whether \
+or not you will have a timer while playing, and if so, which timer you wish to have. The button labeled \"Quit\" will exit the program. Thank you for playing!", \
+                     font = ("TkDefaultFont", 12), wraplength = 380, height = 10)
+        info.grid(row = 1, rowspan = 4, column = 0)
+        playButton = Button(self.master, text = "Play", font = ("TkDefaultFont", 16), width = 10, height = 1, command = lambda : self.startGame())
+        playButton.grid(row = 0, column = 1, padx = 20)
+        timer = Checkbutton(self.master, text = "Timer?", font = ("TkDefaultFont", 16), width = 10, height = 1, command = lambda : self.switchTimers())
+        timer.grid(row = 1, column = 1)
+        timerNormal = Radiobutton(self.master, text = "Normal", font = ("TkDefaultFont", 12), state = DISABLED, variable = self.timerType, value = 1)
+        timerNormal.grid(row = 2, column = 1, sticky = W, padx = (50, 0))
+        timerBlitz = Radiobutton(self.master, text = "Blitz", font = ("TkDefaultFont", 12), state = DISABLED, variable = self.timerType, value = 2)
+        timerBlitz.grid(row = 3, column = 1, sticky = W, padx = (50, 0))
+        self.timers = [timerNormal, timerBlitz]
+        quitButton = Button(self.master, text = "Quit", font = ("TkDefaultFont", 16), width = 10, height = 1, command = lambda : self.quitProgram())
+        quitButton.grid(row = 4, column = 1, padx = 20, pady = (0, 10))
+
+    def switchTimers(self):
+        newState = DISABLED
+        if (self.timers[0].cget("state") == DISABLED):
+            newState = NORMAL
+        for t in self.timers:
+            t.config(state = newState)
+
+    def quitProgram(self):
+        if (MUSIC):
+            pygame.mixer.music.stop()
+        self.master.destroy()
+        exit()
+
+    def startGame(self):
+        self.master.destroy()
 
 #Game superclass to manage the program's implementation
 class Game(Frame):
@@ -241,14 +289,14 @@ class Game(Frame):
         
         ##information side panel
         #make the label saying "Information"
-        infoTitle = Label(self.master, text = "\nInformation", font = ("Courier", 18), width = 22)
-        infoTitle.grid(row = 0, rowspan = 8, column = 0, sticky = N)
+        infoTitle = Label(self.master, text = "Information", font = ("TkDefaultFont", 12), width = 22)
+        infoTitle.grid(row = 1, rowspan = 8, column = 0, sticky = N)
         #make the place for the actual information to display. Set to the string for the white player's turn to start with
         self.information = Label(self.master, text = "Player One's turn.\nSelect a white piece to move.", font = ("TkDefaultFont", 12), width = 22, bg = "red")
         self.information.grid(row = 1, rowspan = 8, column = 0)
         
         # highlight checkbutton
-        self.highlightBox = Checkbutton(self.master, text = "Highlight?", font = ("Courier", 12), command = lambda: self.highlightCheck())
+        self.highlightBox = Checkbutton(self.master, text = "Highlight?", font = ("TkDefaultFont", 12), command = lambda: self.highlightCheck())
         self.highlightBox.grid(row = 9, column = 0)
         #set the button to on by default
         self.highlightBox.select()
