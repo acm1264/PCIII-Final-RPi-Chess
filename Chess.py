@@ -1,7 +1,11 @@
 ######################################################
 # Names: Andrew Maurice, Cody Johnson, Lindsay Cason
 # Date: 5/16/18
-# Description: DOES SOME PRETTY COOL STUFF
+# Description: PiMaster Chess: A fully operational chess game for two players designed around making a fun experience for new
+#                   chess players with the ability to highlight all possible moves and have unlimited play time, as well as
+#                   having an option to disable these features for the more experienced players. The game also features a
+#                   information tab to show what is happening, such as whose turn it is. The game can be exited at any time
+#                   using the exit buttons on either menu or the main game.
 ######################################################
 from Tkinter import *
 
@@ -30,8 +34,10 @@ class Game(Frame):
     def __init__(self, master):
         Frame.__init__(self, master)
         self.master = master
-        self.result = []
+        
+        #variable utilized for displaying highlight (or not)
         self.highlightActive = True
+        
         #stores pieces in play
         self.blackPieces = []
         self.whitePieces = []
@@ -41,11 +47,9 @@ class Game(Frame):
         self.discardType = ["Queen", "Bishop", "Knight", "Rook", "Pawn"]
         self.whiteDiscard = [0, 0, 0, 0, 0]
         self.blackDiscard = [0, 0, 0, 0, 0]
-        
         #dictionaries to hold labels for discard panel
         self.blackDiscardLabels = {}
         self.whiteDiscardLabels = {}
-        self.discardedPieces = []
         
         #variable to hold value of if a piece is already highlighted (for process function to utilize) (maybe make it
         #hold the piece instance itself, where the process function can check if the variable is None to see if it is 
@@ -67,13 +71,6 @@ class Game(Frame):
     ########################################
     # Accessors and Mutators for Game Class#
     ########################################
-    @property
-    def result (self):
-        return self._result
-    @result.setter
-    def result (self, value):
-        self._result = value
-
     @property
     def blackPieces (self):
         return self._blackPieces
@@ -122,13 +119,6 @@ class Game(Frame):
     @blackDiscardLabels.setter
     def blackDiscardLabels(self, value):
         self._blackDiscardLabels = value
-
-    @property
-    def discardedPieces (self):
-        return self._discardedPieces
-    @discardedPieces.setter
-    def discardedPieces (self, value):
-        self._discardedPieces = value
 
     @property
     def pieceSelected (self):
@@ -241,7 +231,7 @@ class Game(Frame):
         self.p2Turn = Label(self.master, text = "", font = ("TkDefaultFont", 12))
         self.p2Turn.grid(row = 0, column = 4, columnspan = 2)
 
-        # timer text (set as class variables to be editted in countdown function
+        # timer text (set as class variables to be editted in countdown function)
         self.timer1 = Label(self.master, text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
         self.timer1.grid(row = 9, column = 6, columnspan = 3, sticky = E)
 
@@ -249,7 +239,7 @@ class Game(Frame):
         self.timer2.grid(row = 0, column = 6, columnspan = 3, sticky = E)
 
         
-        # information side panel
+        ##information side panel
         #make the label saying "Information"
         infoTitle = Label(self.master, text = "\nInformation", font = ("Courier", 18), width = 22)
         infoTitle.grid(row = 0, rowspan = 8, column = 0, sticky = N)
@@ -263,13 +253,13 @@ class Game(Frame):
         #set the button to on by default
         self.highlightBox.select()
         
-        # discard side panel
+        ##discard side panel
         discardTitle = Label(self.master, text = "Discard", font = ("TkDefaultFont", 12), width = 22)
         discardTitle.grid(row = 1, column = 9, columnspan = 3, sticky = N)
-        
+        #white discard labels
         dWhiteLabel = Label(self.master, text = "White", font = ("TkDefaultFont", 12))
         dWhiteLabel.grid(row = 2, column = 9)
-
+        #black discard labels
         dBlackLabel = Label(self.master, text = "Black", font = ("TkDefaultFont", 12))
         dBlackLabel.grid(row = 2, column = 11)
 
@@ -287,7 +277,7 @@ class Game(Frame):
             self.blackDiscardLabels[self.discardType[p]].grid(row = i, column = 11)
             i += 1
 
-        # add discard images
+        # add discard buttons with images (used for pawn swap)
         img = discardQueen
         dQueen = Button(self.master, bg = "grey", bd = 1, image = img)
         dQueen.grid(row = 3, column = 10)
@@ -312,7 +302,7 @@ class Game(Frame):
         dPawn = Button(self.master, bg = "grey", bd = 1, image = img)
         dPawn.grid(row = 7, column = 10)
         dPawn.config(command = lambda: self.process(dPawn))
-    
+        
         
     #instantiate all pieces (black and white) and the two players    
     def setupGame(self):
@@ -365,6 +355,7 @@ class Game(Frame):
     def highlightCheck(self):
         if DEBUG:
             print "this is the highlihgt check function"
+        #turn highlighting on if it is already active else turn it on. Adjust highlights on or off appropriately
         if (self.highlightActive):
             if DEBUG:
                 print "the button is active, so turn it off"
@@ -375,7 +366,6 @@ class Game(Frame):
                 self.removeHighlight(self.tiles[self.pieceSelected.position])
                 self.tiles[self.pieceSelected.position].config(bg = "green")
                 
-
         else:
             if DEBUG:
                 print "the button is inactive, so turn it on"
@@ -401,82 +391,11 @@ class Game(Frame):
                 #hold the position of the pawn in case it is needed to swap with another piece
                 pawnPosition = self.pieceSelected.position
 
-                #queen button is selected, so swap the pawn with a new Queen instance
-                if(self.discardType[row-3] == "Queen"):
-                    #overtake the pawn to remove it from the board first
-                    self.overtake(self.pieceSelected)
-                    #confirm whose turn it is to see what color queen to add
-                    if (self.currentTurn == "white"):
-                        #add a queen instance to the white pieces list
-                        piece = Queen(whiteQueen, "white", pawnPosition)
-                        self.whitePieces.append(piece)
-                        #place the queen appropriately on the board (image on the tile and
-                        #give the piece the appropriate position)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        #set pawn swap to false to indicate the swap was successfully completed
-                        self.pawnSwap = False
-                    else:
-                        #add a queen instance to the black pieces list
-                        piece = Queen(blackQueen, "black", pawnPosition)
-                        self.blackPieces.append(piece)
-                        #place the queen appropriately on the board (image on the tile and
-                        #give the piece the appropriate position)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        #set pawn swap to false to indicate the swap was successfully completed
-                        self.pawnSwap = False
-
-                #bishop button is selected, so swap the pawn with a bishop using similar logic to
-                #how it worked for the queen
-                elif(self.discardType[row-3] == "Bishop"):
-                    self.overtake(self.pieceSelected)
-                    if (self.currentTurn == "white"):
-                        piece = Bishop(whiteBishop, "white", pawnPosition)
-                        self.whitePieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False
-                    else:
-                        piece = Bishop(blackBishop, "black", pawnPosition)
-                        self.blackPieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False
-
-                #knight button is selected, so swap the pawn with a knight using similar logic to
-                #how it worked for the queen
-                elif(self.discardType[row-3] == "Knight"):
-                    self.overtake(self.pieceSelected)
-                    if (self.currentTurn == "white"):
-                        piece = Knight(whiteKnight, "white", pawnPosition)
-                        self.whitePieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False
-                    else:
-                        piece = Knight(blackKnight, "black", pawnPosition)
-                        self.blackPieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False
-
-                #rook button is selected, so swap the pawn with a rook using similar logic to
-                #how it worked for the queen
-                elif(self.discardType[row-3] == "Rook"):
-                    self.overtake(self.pieceSelected)
-                    if (self.currentTurn == "white"):
-                        piece = Rook(whiteRook, "white", pawnPosition)
-                        self.whitePieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False
-                    else:
-                        piece = Rook(blackRook, "black", pawnPosition)
-                        self.blackPieces.append(piece)
-                        self.tiles[pawnPosition].configure(image = piece.image)
-                        piece.updatePiecePosition(pawnPosition)
-                        self.pawnSwap = False 
+                #if the row matches the row value of any of the four pieces possible to swap with, then
+                #add in that piece
+                if(row >= 3 and row <=6):
+                    #subtract 3 so the row value will match the indexes of the discardType list
+                    self.addPiece(row-3, pawnPosition)
 
             #check if pawn swap already occured during this passthrough
             if (not self.pawnSwap):
@@ -515,6 +434,8 @@ class Game(Frame):
                 #make the text in the info pannel reference the player being in check (if applicable)
                 if (self.currentPlayerContested):
                     self.information.config(text = "You are in Check!\nYou must move a piece\nto exit this state.")
+
+        #not currently in a pawnSwap state, continue normally with logic
         else:
             #check if a piece has already been selected
             if (self.pieceSelected == None):
@@ -819,9 +740,6 @@ class Game(Frame):
         for i in range(0, len(self.discardType)):
             if (self.discardType[i] == secondarySelection.pieceType):
                 index = i
-                
-        # add to discarded pieces list
-        self.discardedPieces.append(secondarySelection)
         
         # determine color and update parallel list
         if (secondarySelection.color == "white"):
@@ -861,6 +779,68 @@ class Game(Frame):
 
         # loops the function every millisecond
         self.after(1, self.displayTurn)
+
+
+    #function used for pawnswap to add a new instance of the desired piece
+    def addPiece(self, row, pawnPosition):
+        #overtake the pawn to remove it from the board first
+        self.overtake(self.pieceSelected)
+        
+        #queen button is selected, so swap the pawn with a new Queen instance
+        if (row == 0):
+            #confirm whose turn it is to see what color queen to add
+            if (self.currentTurn == "white"):
+                #add a queen instance to the white pieces list
+                piece = Queen(whiteQueen, "white", pawnPosition)
+                self.whitePieces.append(piece)
+            else:
+                #add a queen instance to the black pieces list
+                piece = Queen(blackQueen, "black", pawnPosition)
+                self.blackPieces.append(piece)
+                
+        #bishop button is selected, so swap the pawn with a new Bishop instance
+        if (row == 1):
+            #confirm whose turn it is to see what color bishop to add
+            if (self.currentTurn == "white"):
+                #add a bishop instance to the white pieces list
+                piece = Bishop(whiteBishop, "white", pawnPosition)
+                self.whitePieces.append(piece)
+            else:
+                #add a Bishop instance to the black pieces list
+                piece = Bishop(blackBishop, "black", pawnPosition)
+                self.blackPieces.append(piece)
+                
+        #Knight button is selected, so swap the pawn with a new Knight instance
+        if (row == 2):
+            #confirm whose turn it is to see what color Knight to add
+            if (self.currentTurn == "white"):
+                #add a Knight instance to the white pieces list
+                piece = Knight(whiteKnight, "white", pawnPosition)
+                self.whitePieces.append(piece)
+            else:
+                #add a Knight instance to the black pieces list
+                piece = Knight(blackKnight, "black", pawnPosition)
+                self.blackPieces.append(piece)
+
+        #Rook button is selected, so swap the pawn with a new Rook instance
+        if (row == 3):
+            #confirm whose turn it is to see what color Rook to add
+            if (self.currentTurn == "white"):
+                #add a Rook instance to the white pieces list
+                piece = Rook(whiteRook, "white", pawnPosition)
+                self.whitePieces.append(piece)
+            else:
+                #add a Rook instance to the black pieces list
+                piece = Rook(blackRook, "black", pawnPosition)
+                self.blackPieces.append(piece)
+
+        #place the piece appropriately on the board (image on the tile and
+        #give the piece the appropriate position)
+        self.tiles[pawnPosition].configure(image = piece.image)
+        piece.updatePiecePosition(pawnPosition)
+        
+        #set pawn swap to false to indicate the swap was successfully completed
+        self.pawnSwap = False
 
 
     ########highlight buttons as needed with these functions
