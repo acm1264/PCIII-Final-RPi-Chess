@@ -325,7 +325,7 @@ class Game(Frame):
             self.blackDiscardLabels[self.discardType[p]].grid(row = i, column = 11)
             i += 1
 
-        # add discard buttons with images (used for pawn swap)
+        #add discard buttons with images (used for pawn swap)
         img = discardQueen
         dQueen = Button(self.master, bg = "grey", bd = 1, image = img)
         dQueen.grid(row = 3, column = 10)
@@ -350,7 +350,14 @@ class Game(Frame):
         dPawn = Button(self.master, bg = "grey", bd = 1, image = img)
         dPawn.grid(row = 7, column = 10)
         dPawn.config(command = lambda: self.process(dPawn))
-        
+
+        quitButton = Button(self.master, text = "Quit", font = ("TkDefaultFont", 12), width = 10, height = 1, command = lambda : self.quitProgram())
+        quitButton.grid(row = 9, column = 10)
+
+    def quitProgram(self):
+        if (MUSIC):
+            pygame.mixer.music.stop()
+        self.master.destroy()
         
     #instantiate all pieces (black and white) and the two players    
     def setupGame(self):
