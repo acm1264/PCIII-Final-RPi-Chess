@@ -833,59 +833,29 @@ class Game(Frame):
     def addPiece(self, row, pawnPosition):
         #overtake the pawn to remove it from the board first
         self.overtake(self.pieceSelected)
-        
-        #queen button is selected, so swap the pawn with a new Queen instance
-        if (row == 0):
-            #confirm whose turn it is to see what color queen to add
-            if (self.currentTurn == "white"):
-                #add a queen instance to the white pieces list
-                piece = Queen(whiteQueen, "white", pawnPosition)
-                self.whitePieces.append(piece)
-            else:
-                #add a queen instance to the black pieces list
-                piece = Queen(blackQueen, "black", pawnPosition)
-                self.blackPieces.append(piece)
-                
-        #bishop button is selected, so swap the pawn with a new Bishop instance
-        if (row == 1):
-            #confirm whose turn it is to see what color bishop to add
-            if (self.currentTurn == "white"):
-                #add a bishop instance to the white pieces list
-                piece = Bishop(whiteBishop, "white", pawnPosition)
-                self.whitePieces.append(piece)
-            else:
-                #add a Bishop instance to the black pieces list
-                piece = Bishop(blackBishop, "black", pawnPosition)
-                self.blackPieces.append(piece)
-                
-        #Knight button is selected, so swap the pawn with a new Knight instance
-        if (row == 2):
-            #confirm whose turn it is to see what color Knight to add
-            if (self.currentTurn == "white"):
-                #add a Knight instance to the white pieces list
-                piece = Knight(whiteKnight, "white", pawnPosition)
-                self.whitePieces.append(piece)
-            else:
-                #add a Knight instance to the black pieces list
-                piece = Knight(blackKnight, "black", pawnPosition)
-                self.blackPieces.append(piece)
 
-        #Rook button is selected, so swap the pawn with a new Rook instance
-        if (row == 3):
-            #confirm whose turn it is to see what color Rook to add
-            if (self.currentTurn == "white"):
-                #add a Rook instance to the white pieces list
-                piece = Rook(whiteRook, "white", pawnPosition)
-                self.whitePieces.append(piece)
-            else:
-                #add a Rook instance to the black pieces list
-                piece = Rook(blackRook, "black", pawnPosition)
-                self.blackPieces.append(piece)
+        #determine the type of piece selected
+        pieceType = self.discardType[row]
+
+        #if currentTurn is white, make a new instance of a pieceType class with correct color
+        if (self.currentTurn == "white"):
+            #build the call function in a string to be evaluated
+            newPieceString = pieceType+"(white"+pieceType+", 'white', pawnPosition)"
+            newPiece = eval(newPieceString)
+            #add new piece to pieces in play by color
+            self.whitePieces.append(newPiece)
+        #if currentTurn is black, make a new instance of a pieceType class with correct color
+        else:
+            #build the call function in a string to be evaluated
+            newPieceString = pieceType+"(black"+pieceType+", 'black', pawnPosition)"
+            newPiece = eval(newPieceString)
+            #add new piece to pieces in play by color
+            self.blackPieces.append(newPiece)
 
         #place the piece appropriately on the board (image on the tile and
         #give the piece the appropriate position)
-        self.tiles[pawnPosition].configure(image = piece.image)
-        piece.updatePiecePosition(pawnPosition)
+        self.tiles[pawnPosition].configure(image = newPiece.image)
+        newPiece.updatePiecePosition(pawnPosition)
         
         #set pawn swap to false to indicate the swap was successfully completed
         self.pawnSwap = False
