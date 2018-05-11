@@ -9,7 +9,7 @@
 ######################################################
 from Tkinter import *
 
-DEBUG = False
+DEBUG = True
 MUSIC = True
 
 #only import the pygame library if music is desired (meant for turning it off
@@ -17,11 +17,15 @@ MUSIC = True
 if (MUSIC):
     import pygame
 
+#class for the main menu displayed before starting the game
 class Menu(Frame):
     def __init__(self, master):
         self.master = master
         self.timerType = IntVar()
         self.timerType.set(1)
+        self.timerCheckboxType = IntVar()
+        self.timerCheckboxType.set(0)
+        self.timerChosen = None
 
     @property
     def timerType (self):
@@ -47,8 +51,8 @@ or not you will have a timer while playing, and if so, which timer you wish to h
         info.grid(row = 1, rowspan = 4, column = 0)
         playButton = Button(self.master, text = "Play", font = ("TkDefaultFont", 16), width = 10, height = 1, command = lambda : self.startGame())
         playButton.grid(row = 0, column = 1, padx = 20)
-        timer = Checkbutton(self.master, text = "Timer?", font = ("TkDefaultFont", 16), width = 10, height = 1, command = lambda : self.switchTimers())
-        timer.grid(row = 1, column = 1)
+        self.timer = Checkbutton(self.master, text = "Timer?", font = ("TkDefaultFont", 16), width = 10, height = 1, variable = self.timerCheckboxType, command = lambda : self.switchTimers())
+        self.timer.grid(row = 1, column = 1)
         timerNormal = Radiobutton(self.master, text = "Normal", font = ("TkDefaultFont", 12), state = DISABLED, variable = self.timerType, value = 1)
         timerNormal.grid(row = 2, column = 1, sticky = W, padx = (50, 0))
         timerBlitz = Radiobutton(self.master, text = "Blitz", font = ("TkDefaultFont", 12), state = DISABLED, variable = self.timerType, value = 2)
@@ -56,14 +60,17 @@ or not you will have a timer while playing, and if so, which timer you wish to h
         self.timers = [timerNormal, timerBlitz]
         quitButton = Button(self.master, text = "Quit", font = ("TkDefaultFont", 16), width = 10, height = 1, command = lambda : self.quitProgram())
         quitButton.grid(row = 4, column = 1, padx = 20, pady = (0, 10))
-
+        
     def switchTimers(self):
         newState = DISABLED
         if (self.timers[0].cget("state") == DISABLED):
             newState = NORMAL
         for t in self.timers:
             t.config(state = newState)
-
+        
+        if DEBUG:
+            print self.timerCheckboxType.get()
+        
     def quitProgram(self):
         if (MUSIC):
             pygame.mixer.music.stop()
@@ -71,6 +78,17 @@ or not you will have a timer while playing, and if so, which timer you wish to h
         exit()
 
     def startGame(self):
+        if (self.timerCheckboxType.get() == 1):
+            if (self.timerType.get() == 1):
+                #normal timer
+                getTimer("normal")
+            else:
+                #blitz timer
+                getTimer("blitz")
+        else:
+            #no timer
+            getTimer("no")
+        
         self.master.destroy()
 
 #Game superclass to manage the program's implementation
@@ -111,7 +129,7 @@ class Game(Frame):
         # variable to keep up with pawnSwap
         self.pawnSwap = False
 
-        #values for the clock times for both players
+        #values for the clock times for both players (default to normal 15 min time)
         self.p1Time = 900
         self.p2Time = 900
 
@@ -409,7 +427,7 @@ class Game(Frame):
     #process function for the highlight check box, where clicking it will turn highlighting on or off
     def highlightCheck(self):
         if DEBUG:
-            print "this is the highlihgt check function"
+            print "this is the highlight check function"
         #turn highlighting on if it is already active else turn it on. Adjust highlights on or off appropriately
         if (self.highlightActive):
             if DEBUG:
@@ -806,6 +824,12 @@ class Game(Frame):
             self.blackDiscard[index] += 1
             self.blackDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.blackDiscard[index]))    
 
+    def timerSetup(self, timer):
+        if 
+
+
+
+        
     # function that counts down and updates player timers on a loop
     def countdown(self):
         # counts down selected player's timer
@@ -1438,7 +1462,13 @@ class Pawn(Piece):
 ###################################################################
 #Main part of program
 ###################################################################
-
+timer = None
+#get the timer
+def getTimer(value):
+    timer = value
+    if DEBUG:
+        print timer
+    
 #initialize pygame and the mixer for the music to work
 if MUSIC:
     pygame.init()
@@ -1482,6 +1512,7 @@ window.title("Chess Reloaded")
 game = Game(window)
 game.setupGUI()
 game.setupGame()
+game.timerSetup(timer)
 game.countdown()
 game.displayTurn()
 if MUSIC:
