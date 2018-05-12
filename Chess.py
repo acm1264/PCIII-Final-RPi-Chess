@@ -77,17 +77,15 @@ or not you will have a timer while playing, and if so, which timer you wish to h
         self.master.destroy()
         exit()
 
+    #once the button to start the game is clicked, call the function in the main to store the value of the timer selected
+    #by the player before destroying the window to make a new one
     def startGame(self):
-        if (self.timerCheckboxType.get() == 1):
-            if (self.timerType.get() == 1):
-                #normal timer
-                getTimer("normal")
-            else:
-                #blitz timer
-                getTimer("blitz")
-        else:
-            #no timer
-            getTimer("no")
+
+        #store global variables with the values of the checkbox and radio buttons so after this window is deleted, the
+        #second window will be able to use these for setting up the timer
+        global timerCheck, timerType
+        timerCheck = self.timerCheckboxType.get()
+        timerType = self.timerType.get()
         
         self.master.destroy()
 
@@ -824,26 +822,6 @@ class Game(Frame):
             self.blackDiscard[index] += 1
             self.blackDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.blackDiscard[index]))    
 
-    def timerSetup(self, timer):
-        if 
-
-
-
-        
-    # function that counts down and updates player timers on a loop
-    def countdown(self):
-        # counts down selected player's timer
-        if (self.currentTurn == "white"):
-            self.p1Time -= 1
-            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)))
-             
-        else:
-            self.p2Time -= 1
-            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)))
-            
-        # loops the function every second
-        self.after(1000, self.countdown)
-
     #function to display whose turn it is currently
     def displayTurn(self):
         if (self.currentTurn == "white"):
@@ -891,6 +869,84 @@ class Game(Frame):
         #set pawn swap to false to indicate the swap was successfully completed
         self.pawnSwap = False
 
+    ######functions for timer processing
+        
+    #function to setup which timer will be used based on the main menu input
+    def timerSetup(self):
+
+        if (timerCheck == 1):
+            if (timerType == 1):
+                #normal timer
+                self.p1Time = 900
+                self.p2Time = 900
+                if DEBUG:
+                    print "returning countdown for normal timer"
+                    
+            else:
+                #blitz timer
+                self.p1Time = 300
+                self.p2Time = 300
+
+            return "countdown"
+        
+        else:
+            #no timer
+            self.p1Time = 0
+            self.p2Time = 0
+            return "countup"
+
+
+        
+        '''#normal timer uses default 900 seconds
+        if (timerCheck == "normal"):
+            self.p1Time = 900
+            self.p2Time = 900
+            if DEBUG:
+                print "returning countdown for normal timer"
+            
+            return "countdown"
+
+        #blitz timer uses 300 seconds
+        elif (timer == "blitz"):
+            self.p1Time = 300
+            self.p2Time = 300
+            return "countdown"
+
+        #no timer, so the clocks will count up instead
+        else:
+            self.p1Time = 0
+            self.p2Time = 0
+            return "countup"'''
+
+    # function that counts down and updates player timers on a loop
+    def countdown(self):
+        # counts down selected player's timer
+        if (self.currentTurn == "white"):
+            self.p1Time -= 1
+            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)))
+             
+        else:
+            self.p2Time -= 1
+            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)))
+            
+        # loops the function every second
+        self.after(1000, self.countdown)
+
+    #function that counts up and updates the player timers on a loop
+    def countup(self):
+        # counts down selected player's timer
+        if (self.currentTurn == "white"):
+            self.p1Time += 1
+            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)))
+             
+        else:
+            self.p2Time += 1
+            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)))
+            
+        # loops the function every second
+        self.after(1000, self.countup)
+
+    ########end of timer functions
 
     ########highlight buttons as needed with these functions
         
@@ -1462,12 +1518,6 @@ class Pawn(Piece):
 ###################################################################
 #Main part of program
 ###################################################################
-timer = None
-#get the timer
-def getTimer(value):
-    timer = value
-    if DEBUG:
-        print timer
     
 #initialize pygame and the mixer for the music to work
 if MUSIC:
@@ -1510,15 +1560,26 @@ discardPawn = PhotoImage(file = "images/discardPawn.gif")
 
 window.title("Chess Reloaded")
 game = Game(window)
+
+#figure out which timer function (countdown or up) is needed and set the timers
+timerFunction = game.timerSetup()
+
+#setup the components for teh gui and game to be ready to use, including tiles and pieces
 game.setupGUI()
 game.setupGame()
-game.timerSetup(timer)
-game.countdown()
+
+#start the loop for the appropriate timer to run
+eval("game."+timerFunction+"()")
+
+#set the current turn to display to allow the game to start properly
 game.displayTurn()
+
+#play the music if desired
 if MUSIC:
     pygame.mixer.music.load("music/gameplay.ogg")
     #-1 in play makes an infinite loop of the music until it is told otherwise
     pygame.mixer.music.play(-1)
+    
 window.mainloop()
 
 ####note: once exit buttons are installed, they will need to take into account
