@@ -11,11 +11,15 @@ from Tkinter import *
 
 DEBUG = True
 MUSIC = True
+GPIO = False
 
 #only import the pygame library if music is desired (meant for turning it off
 #during testing, or if pygame not compatable with user's device)
 if (MUSIC):
     import pygame
+
+if (GPIO):
+    import RPi.GPIO as GPIO
 
 #class for the main menu displayed before starting the game
 class Menu(Frame):
@@ -373,6 +377,8 @@ class Game(Frame):
     def quitProgram(self):
         if (MUSIC):
             pygame.mixer.music.stop()
+        if (GPIO):
+            GPIO.cleanup()
         self.master.destroy()
         
     #instantiate all pieces (black and white) and the two players    
@@ -416,6 +422,71 @@ class Game(Frame):
         #make the queen and king
         self.whitePieces.append(Queen(whiteQueen, "white", 84))
         self.whitePieces.append(King(whiteKing, "white", 85))
+
+        if (GPIO):
+            #light led line accordingly
+            self.setupGPIO()
+
+    def red(self, led):
+        GPIO.output(led[0], GPIO.LOW)
+        GPIO.output(led[1], GPIO.HIGH)
+
+    def blue(self, led):
+        GPIO.output(led[0], GPIO.HIGH)
+        GPIO.output(led[1], GPIO.LOW)
+
+    def purple(self, led):
+        GPIO.output(led[0], GPIO.HIGH)
+        GPIO.output(led[1], GPIO.HIGH)
+        
+    def setupGPIO(self):
+        #setup GPIO mode
+        GPIO.setmode(GPIO.BCM)
+        #setup pins[blue, red]
+        led0 = [17, 18]
+        led1 = [16, 19]
+        led2 = [13, 20]
+        led3 = [12, 21]
+        led4 = [6, 22]
+        #store leds in a list
+        ledLine = [led0, led1, led2, led3, led4]
+        #set all pins connected to leds as output
+        for led in range(len(ledLine)):
+            for pin in range(0,2):
+                GPIO.setup(ledLine[led][pin], GPIO.OUT)
+        
+        #determine player scores based on pieces in play
+        redScore = 0
+        blueScore = 0
+        for piece in range(len(self.whitePieces)):
+            redScore += self.whitePieces[piece].pieceValue
+        for piece in range(len(self.blackPieces)):
+            blueScore += self.blackPieces[piece].pieceValue
+
+        #find total by summing two scores, then find the red player's percent
+        total = redScore + blueScore
+        redPercent = (float(redScore)/total) * 100
+
+        #store what led should be purple based on range
+        percentRange = {"range(0,20)":0, "range(20,40)":1, "range(40,60)":2,\
+                     "range(60,80)":3, "range(80,100)":4}
+
+        #look through ranges until one is found that contains the red percent
+        for key in percentRange.keys():
+            if (int(redPercent) in eval(key)):
+                for led in range(len(ledLine)):
+                    #if it is before the purple led, it is red
+                    if (led < percentRange[key]):
+                        stringLED = "self.red(led" + str(led) + ")"
+                        eval(stringLED)
+                    #if it is the purple led, it is purple
+                    elif (led == percentRange[key]):
+                        stringLED = "self.purple(led" + str(led) + ")"
+                        eval(stringLED)
+                    #if it is after the purple led, it is blue
+                    else:
+                        stringLED = "self.blue(led" + str(led) + ")"
+                        eval(stringLED)
         
     def play(self):
         #would return a result of victor in the end
@@ -820,17 +891,20 @@ class Game(Frame):
         else:
             self.blackPieces.remove(secondarySelection)
             self.blackDiscard[index] += 1
-            self.blackDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.blackDiscard[index]))    
+            self.blackDiscardLabels[self.discardType[index]].config(text = "x{}".format(self.blackDiscard[index]))
+
+        if (GPIO):
+            self.setupGPIO()
 
     #function to display whose turn it is currently
     def displayTurn(self):
         if (self.currentTurn == "white"):
             self.p1Turn.config(bg = "red", text = "Your Turn")
-            self.p2Turn.config(bg = "SystemButtonFace", text = "")
+            self.p2Turn.config(bg = "grey85", text = "")
             self.information.config(bg = "red")
             
         else:
-            self.p1Turn.config(bg = "SystemButtonFace", text = "")
+            self.p1Turn.config(bg = "grey85", text = "")
             self.p2Turn.config(bg = "light blue", text = "Your Turn")
             self.information.config(bg = "light blue")
 
@@ -865,6 +939,8 @@ class Game(Frame):
         #give the piece the appropriate position)
         self.tiles[pawnPosition].configure(image = newPiece.image)
         newPiece.updatePiecePosition(pawnPosition)
+
+        self.setupGPIO()
         
         #set pawn swap to false to indicate the swap was successfully completed
         self.pawnSwap = False
@@ -1379,6 +1455,7 @@ class Piece(Game):
 class King(Piece):
     #utilize the Piece class constructor, in addition to the contested variable (False by default)
     pieceType = "King"
+    pieceValue = 0
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
 
@@ -1403,6 +1480,7 @@ class King(Piece):
 #Queen class
 class Queen(Piece):
     pieceType = "Queen"
+    pieceValue = 3
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1415,6 +1493,7 @@ class Queen(Piece):
 #Rook class
 class Rook(Piece):
     pieceType = "Rook"
+    pieceValue = 2
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1427,6 +1506,7 @@ class Rook(Piece):
 #Bishop class
 class Bishop(Piece):
     pieceType = "Bishop"
+    pieceValue = 2
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1439,6 +1519,7 @@ class Bishop(Piece):
 #Knight class
 class Knight(Piece):
     pieceType = "Knight"
+    pieceValue = 2
     #utilize the Piece class constructor
     def __init__(self, image, color, position):
         Piece.__init__(self, image, color, position)
@@ -1465,6 +1546,7 @@ class Knight(Piece):
 #Pawn class
 class Pawn(Piece):
     pieceType = "Pawn"
+    pieceValue = 1
     #utilize the Piece class constructor, in addition to the firstMove variable (True by default)
     def __init__(self, image, color, position):
         self.firstMove = True
