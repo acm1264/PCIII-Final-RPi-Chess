@@ -328,14 +328,6 @@ class Game(Frame):
         #color discard labels
         dcolorLabel = Label(self.master, width = 18, text = "White\t              Black", font = ("TkDefault", 12))
         dcolorLabel.grid(row = 2, column = 9, columnspan = 3, sticky = N+E+W)
-        """
-        #white discard labels
-        dWhiteLabel = Label(self.master, text = "White", font = ("TkDefaultFont", 12), width = 5)
-        dWhiteLabel.grid(row = 2, column = 9, sticky = E)
-        #black discard labels
-        dBlackLabel = Label(self.master, text = "Black", font = ("TkDefaultFont", 12))
-        dBlackLabel.grid(row = 2, column = 11, sticky = W)
-        """
         #text to hold the number of each piece type discarded for the white player
         i = 3
         for p in range(0, len(self.discardType)):
