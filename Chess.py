@@ -102,6 +102,7 @@ class Game(Frame):
     def __init__(self, master):
         Frame.__init__(self, master)
         self.master = master
+        master.attributes("-fullscreen", True)
         
         #variable utilized for displaying highlight (or not)
         self.highlightActive = True
@@ -287,21 +288,21 @@ class Game(Frame):
                 self.tiles[coord].grid(row = r, column = c)
         
         # top player headers
-        p1Title = Label(self.master, text = "Player One", font = ("TkDefaultFont", 12))
-        p1Title.grid(row = 9, column = 1, columnspan = 3, sticky = W)
-        p2Title = Label(self.master, text = "Player Two", font = ("TkDefaultFont", 12))
+        p1Title = Label(self.master, text = "Player One", font = ("TkDefaultFont", 13), height = 1)
+        p1Title.grid(row = 9, column = 1, columnspan = 3, sticky = N+W)
+        p2Title = Label(self.master, text = "Player Two", font = ("TkDefaultFont", 13), height = 1)
         p2Title.grid(row = 0, column = 1, columnspan = 3, sticky = W)
 
         #"Your Turn" text (default to only show for white)
         #set as class variables to be editted in displayTurn function
         self.p1Turn = Label(self.master, text = "Your Turn", font = ("TkDefaultFont", 12))
-        self.p1Turn.grid(row = 9, column = 4, columnspan = 2)
+        self.p1Turn.grid(row = 9, column = 4, columnspan = 2, sticky = N)
         self.p2Turn = Label(self.master, text = "", font = ("TkDefaultFont", 12))
         self.p2Turn.grid(row = 0, column = 4, columnspan = 2)
 
         # timer text (set as class variables to be editted in countdown function)
         self.timer1 = Label(self.master, text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
-        self.timer1.grid(row = 9, column = 6, columnspan = 3, sticky = E)
+        self.timer1.grid(row = 9, column = 6, columnspan = 3, sticky = N+E)
 
         self.timer2 = Label(self.master, text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
         self.timer2.grid(row = 0, column = 6, columnspan = 3, sticky = E)
@@ -309,42 +310,47 @@ class Game(Frame):
         
         ##information side panel
         #make the label saying "Information"
-        infoTitle = Label(self.master, text = "Information", font = ("TkDefaultFont", 12), width = 22)
+        infoTitle = Label(self.master, text = "Information", font = ("TkDefaultFont", 12), width = 20)
         infoTitle.grid(row = 1, rowspan = 8, column = 0, sticky = N)
         #make the place for the actual information to display. Set to the string for the white player's turn to start with
-        self.information = Label(self.master, text = "Player One's turn.\nSelect a white piece to move.", font = ("TkDefaultFont", 12), width = 22, bg = "red")
+        self.information = Label(self.master, text = "Player One's turn. Select a white piece to move.", wraplength = 200, font = ("TkDefaultFont", 12), width = 20, bg = "red")
         self.information.grid(row = 1, rowspan = 8, column = 0)
         
         # highlight checkbutton
         self.highlightBox = Checkbutton(self.master, text = "Highlight?", font = ("TkDefaultFont", 12), command = lambda: self.highlightCheck())
-        self.highlightBox.grid(row = 9, column = 0)
+        self.highlightBox.grid(row = 9, column = 0, sticky = N)
         #set the button to on by default
         self.highlightBox.select()
         
         ##discard side panel
-        discardTitle = Label(self.master, text = "Discard", font = ("TkDefaultFont", 12), width = 22)
+        discardTitle = Label(self.master, text = "Discard Pile", font = ("TkDefaultFont", 11))
         discardTitle.grid(row = 1, column = 9, columnspan = 3, sticky = N)
+        #color discard labels
+        dcolorLabel = Label(self.master, width = 18, text = "White\t              Black", font = ("TkDefault", 12))
+        dcolorLabel.grid(row = 2, column = 9, columnspan = 3, sticky = N+E+W)
+        """
         #white discard labels
-        dWhiteLabel = Label(self.master, text = "White", font = ("TkDefaultFont", 12))
-        dWhiteLabel.grid(row = 2, column = 9)
+        dWhiteLabel = Label(self.master, text = "White", font = ("TkDefaultFont", 12), width = 5)
+        dWhiteLabel.grid(row = 2, column = 9, sticky = E)
         #black discard labels
         dBlackLabel = Label(self.master, text = "Black", font = ("TkDefaultFont", 12))
-        dBlackLabel.grid(row = 2, column = 11)
-
+        dBlackLabel.grid(row = 2, column = 11, sticky = W)
+        """
         #text to hold the number of each piece type discarded for the white player
         i = 3
         for p in range(0, len(self.discardType)):
-            self.whiteDiscardLabels[self.discardType[p]] = Label(self.master, text = "x{}".format(self.whiteDiscard[p]), font = ("TkDefaultFont",12))
-            self.whiteDiscardLabels[self.discardType[p]].grid(row = i, column = 9)
+            self.whiteDiscardLabels[self.discardType[p]] = Label(self.master, width = 3, text = "x{}".format(self.whiteDiscard[p]), font = ("TkDefaultFont",12), anchor = E)
+            self.whiteDiscardLabels[self.discardType[p]].grid(row = i, column = 9, sticky = E)
             i += 1
 
         #text to hold the number of each piece type discarded for the black player
         i = 3
         for p in range(0, len(self.discardType)):
-            self.blackDiscardLabels[self.discardType[p]] = Label(self.master, text = "x{}".format(self.blackDiscard[p]), font = ("TkDefaultFont",12))
-            self.blackDiscardLabels[self.discardType[p]].grid(row = i, column = 11)
+            self.blackDiscardLabels[self.discardType[p]] = Label(self.master, width = 3, text = "x{}".format(self.blackDiscard[p]), font = ("TkDefaultFont",12), anchor = W)
+            self.blackDiscardLabels[self.discardType[p]].grid(row = i, column = 11, sticky = W)
             i += 1
 
+        #add discard buttons with images (used for pawn swap)
         #add discard buttons with images (used for pawn swap)
         img = discardQueen
         dQueen = Button(self.master, bg = "grey", bd = 1, image = img)
@@ -370,9 +376,8 @@ class Game(Frame):
         dPawn = Button(self.master, bg = "grey", bd = 1, image = img)
         dPawn.grid(row = 7, column = 10)
         dPawn.config(command = lambda: self.process(dPawn))
-
         quitButton = Button(self.master, text = "Quit", font = ("TkDefaultFont", 12), width = 10, height = 1, command = lambda : self.quitProgram())
-        quitButton.grid(row = 9, column = 10)
+        quitButton.grid(row = 8, column = 10, rowspan = 2, sticky = S, pady = (20,0))
 
     def quitProgram(self):
         if (MUSIC):
@@ -575,7 +580,7 @@ class Game(Frame):
 
                 #make the text in the info pannel reference the player being in check (if applicable)
                 if (self.currentPlayerContested):
-                    self.information.config(text = "You are in Check!\nYou must move a piece\nto exit this state.")
+                    self.information.config(text = "You are in Check! You must move a piece to exit this state.")
 
         #not currently in a pawnSwap state, continue normally with logic
         else:
@@ -604,14 +609,14 @@ class Game(Frame):
                         if (self.pieceSelectedMoves == []):
                             self.pieceSelected = None
                             #update info pannel to reflect this
-                            self.information.config(text = "You can't move that piece\nTry moving a different one.")
+                            self.information.config(text = "You can't move that piece. Try moving a different one.")
                         
                         #only highlight if there are any possible moves
                         if (self.pieceSelectedMoves != []):
                             #highlight the button holding the selected piece and possible moves
                             self.highlight(button)
                             #update info pannel to reflect this
-                            self.information.config(text = "Select where you\nwill move this piece.")
+                            self.information.config(text = "Select where you will move this piece.")
 
                     #piece selected is not current player's piece, deselect pieces
                     else:
@@ -653,7 +658,7 @@ class Game(Frame):
                            (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
                             self.pawnSwap = True
                             # prompt user about pawnSwap in info
-                            self.information.config(text = "Click a piece in\nthe right column to\npromote your pawn to.")
+                            self.information.config(text = "Click a piece in the right column to promote your pawn to.")
                         else:
                             #check the king for the player not currently moving to see if that player will be in check
                             #for their turn (color of the other player is the opposite of the color of the currently
@@ -688,11 +693,11 @@ class Game(Frame):
 
                             #make the text in the info pannel reference the player being in check (if applicable)
                             if (self.currentPlayerContested):
-                                self.information.config(text = "You are in Check!\nYou must move a piece\nto exit this state.")
+                                self.information.config(text = "You are in Check! You must move a piece to exit this state.")
 
                     #invalid blank tile selected, inform player they cannot move there
                     else:
-                        self.information.config(text = "You can't move\nyour piece there.")
+                        self.information.config(text = "You can't move your piece there.")
 
                 #if the same piece was clicked a second time, deselect it and unhighlight everything
                 elif (secondPiece == self.pieceSelected):
@@ -706,12 +711,12 @@ class Game(Frame):
                         #update info back to the default start of turn text
                         #default text is for player being in check (if applicable)
                         if (self.currentPlayerContested):
-                            self.information.config(text = "You are in Check!\nYou must move a piece\nto exit this state.")
+                            self.information.config(text = "You are in Check! You must move a piece to exit this state.")
                         #player is not in check, so use basic turn start text based on the current player's turn
                         elif (self.currentTurn == "white"):
-                            self.information.config(text = "Player One's turn.\nSelect a white piece to move.")
+                            self.information.config(text = "Player One's turn. Select a white piece to move.")
                         else:
-                            self.information.config(text = "Player Two's turn.\nSelect a black piece to move.")
+                            self.information.config(text = "Player Two's turn. Select a black piece to move.")
                     
                 #there is a piece on the second tile selected, so check to see if the piece selected
                 #is in the valid range of pieceSelectedMoves
@@ -731,7 +736,7 @@ class Game(Frame):
                         (self.pieceSelected.image == blackPawn and self.pieceSelected.row == 8)):
                         self.pawnSwap = True
                         # prompt user about pawnSwap in info
-                        self.information.config(text = "Click a piece in\nthe right column to\npromote your pawn to.")
+                        self.information.config(text = "Click a piece in the right column to promote your pawn to.")
                     else:
                         #check the king for the player not currently moving to see if that player will be in check
                         #for their turn (color of the other player is the opposite of the color of the currently
@@ -767,7 +772,7 @@ class Game(Frame):
 
                         #make the text in the info pannel reference the player being in check (if applicable)
                         if (self.currentPlayerContested):
-                            self.information.config(text = "You are in Check!\nYou must move a piece\nto exit this state.")
+                            self.information.config(text = "You are in Check! You must move a piece to exit this state.")
 
                 #check if the second piece selected is the same color as the first
                 elif (secondPiece.color == self.pieceSelected.color):
@@ -792,18 +797,18 @@ class Game(Frame):
                     if (self.pieceSelectedMoves == []):
                         self.pieceSelected = None
                         #update info pannel to reflect this
-                        self.information.config(text = "You can't move that piece\nTry moving a different one.")
+                        self.information.config(text = "You can't move that piece. Try moving a different one.")
                         
                     #only highlight if there are any possible moves
                     else:
                         #highlight the button holding the selected piece and possible moves
                         self.highlight(self.tiles[self.pieceSelected.position])
                         #update info pannel to reflect this
-                        self.information.config(text = "Select where you\nwill move this piece.")
+                        self.information.config(text = "Select where you will move this piece.")
 
                 #piece selected cannnot be overtaken
                 else:
-                    self.information.config(text = "You can't move\nyour piece there.")
+                    self.information.config(text = "You can't move your piece there.")
 
 
     #below are functions for the Game class utilized by the process function
@@ -813,10 +818,10 @@ class Game(Frame):
     def changeTurn(self):
         if (self.currentTurn == "white"):
             self.currentTurn = "black"
-            self.information.config(text = "Player Two's turn.\nSelect a black piece to move.")
+            self.information.config(text = "Player Two's turn. Select a black piece to move.")
         else:
             self.currentTurn = "white"
-            self.information.config(text = "Player One's turn.\nSelect a white piece to move.")
+            self.information.config(text = "Player One's turn. Select a white piece to move.")
     
     #function to return the coordinate of the inputted button as a row-column pair
     def buttonPosition(self, button):
@@ -900,11 +905,11 @@ class Game(Frame):
     def displayTurn(self):
         if (self.currentTurn == "white"):
             self.p1Turn.config(bg = "red", text = "Your Turn")
-            self.p2Turn.config(bg = "grey85", text = "")
+            self.p2Turn.config(bg = "grey95", text = "")
             self.information.config(bg = "red")
             
         else:
-            self.p1Turn.config(bg = "grey85", text = "")
+            self.p1Turn.config(bg = "grey95", text = "")
             self.p2Turn.config(bg = "light blue", text = "Your Turn")
             self.information.config(bg = "light blue")
 
