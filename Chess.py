@@ -9,15 +9,16 @@
 ######################################################
 from Tkinter import *
 
-DEBUG = True
+DEBUG = False
 MUSIC = True
-GPIO = False
+GPIO = True
 
 #only import the pygame library if music is desired (meant for turning it off
 #during testing, or if pygame not compatable with user's device)
 if (MUSIC):
     import pygame
 
+#only import the GPIO library if the breadboard is connected to the Pi
 if (GPIO):
     import RPi.GPIO as GPIO
 
@@ -25,6 +26,7 @@ if (GPIO):
 class Menu(Frame):
     def __init__(self, master):
         self.master = master
+        master.attributes("-fullscreen", True)
         self.timerType = IntVar()
         self.timerType.set(1)
         self.timerCheckboxType = IntVar()
@@ -368,6 +370,8 @@ class Game(Frame):
         dPawn = Button(self.master, bg = "grey", bd = 1, image = img)
         dPawn.grid(row = 7, column = 10)
         dPawn.config(command = lambda: self.process(dPawn))
+
+        #create quit button
         quitButton = Button(self.master, text = "Quit", font = ("TkDefaultFont", 12), width = 10, height = 1, command = lambda : self.quitProgram())
         quitButton.grid(row = 8, column = 10, rowspan = 2, sticky = S, pady = (20,0))
 
@@ -465,8 +469,8 @@ class Game(Frame):
         redPercent = (float(redScore)/total) * 100
 
         #store what led should be purple based on range
-        percentRange = {"range(0,20)":0, "range(20,40)":1, "range(40,60)":2,\
-                     "range(60,80)":3, "range(80,100)":4}
+        percentRange = {"range(0,35)":0, "range(35,45)":1, "range(45,55)":2,\
+                     "range(55,65)":3, "range(65,100)":4}
 
         #look through ranges until one is found that contains the red percent
         for key in percentRange.keys():
