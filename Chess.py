@@ -498,11 +498,6 @@ class Game(Frame):
                     else:
                         stringLED = "self.blue(led" + str(led) + ")"
                         eval(stringLED)
-        
-    def play(self):
-        #would return a result of victor in the end
-        pass
-
 
     #process function for the highlight check box, where clicking it will turn highlighting on or off
     def highlightCheck(self):
@@ -528,6 +523,39 @@ class Game(Frame):
                 if (self.pieceSelected != None):
                     self.highlight(self.tiles[self.pieceSelected.position])
 
+
+    ####################end game functions
+    #flash the color of the winner in a pattern
+    def winFlash(self, color, secondColor):
+        #setup GPIO mode
+        GPIO.setmode(GPIO.BCM)
+        #setup pins[blue, red]
+        led0 = [17, 18]
+        led1 = [16, 19]
+        led2 = [13, 20]
+        led3 = [12, 21]
+        led4 = [6, 22]
+        #store leds in a list
+        ledLine = [led0, led1, led2, led3, led4]
+        #set all pins connected to leds as output
+        for led in ledLine:
+            for pin in range(0,2):
+                GPIO.setup(led[pin], GPIO.OUT)
+
+        #make the even number LEDs flash one color, and the odd flash the other
+        #(winner's color and purple)
+        for led in ledLine:
+            if (ledLine.index(led) % 2 == 0):
+                flashMain = "self. " + str(color) + "(" + str(led) +")"
+                eval(flashMain)
+            else:
+                flashSecondary = "self. " + str(secondColor) + "(" + str(led) +")"
+                eval(flashSecondary)
+
+        #change the lights between the winning color and purple every 0.5 seconds
+        self.after(500, lambda : self.winFlash(secondColor, color))
+            
+        
     #display the pop up window with a victory message and a special jingle based on who wins
     def popupmsg(self, msg, pic):
         popup = Toplevel()
@@ -536,9 +564,11 @@ class Game(Frame):
         if (pic == "blueWin"):
             img = PhotoImage(file = "images/BlueWin.gif")
             title = "Player 2 Wins!"
+            self.winFlash("blue", "purple")
         elif (pic == "redWin"):
             img = PhotoImage(file = "images/RedWin.gif")
             title = "Player 1 Wins!"
+            self.winFlash("red", "purple")
         popup.wm_title(title)
         label = Label(popup, text = msg, font = ("TkDefaultFont", 30))
         label.grid(row = 0, column = 0, padx = 10, pady = 10)
@@ -553,6 +583,8 @@ class Game(Frame):
         pygame.mixer.music.play(1)
 
         popup.mainloop()
+
+        ####################end of end game functions
 
     #function to allow Buttons to be processed after being clicked (NOTE: this function processes a button being
     #pressed, so it takes a button as the input, not the piece, though the piece and button have the same coordinate
@@ -967,7 +999,7 @@ class Game(Frame):
             self.information.config(bg = "light blue")
 
         # loops the function every millisecond
-        self.after(1, self.displayTurn)
+        self.after(1, lambda : self.displayTurn())
 
 
     #function used for pawnswap to add a new instance of the desired piece
@@ -1058,8 +1090,8 @@ class Game(Frame):
             
         # loops the function every second
         if (not self.gameOver):
-            self.after(1000, self.countdown)
-
+            self.after(1000, lambda : self.countdown())
+    
     #function that counts up and updates the player timers on a loop
     def countup(self):
         # counts down selected player's timer
@@ -1073,7 +1105,7 @@ class Game(Frame):
             
         # loops the function every second
         if (not self.gameOver):
-            self.after(1000, self.countup)
+            self.after(1000, lambda : self.countup())
 
     ########end of timer functions
 
