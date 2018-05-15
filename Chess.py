@@ -1,4 +1,4 @@
-######################################################
+###############################################################################################################################
 # Names: Andrew Maurice, Cody Johnson, Lindsay Cason
 # Date: 5/16/18
 # Description: PiMaster Chess: A fully operational chess game for two players designed around making a fun experience for new
@@ -6,7 +6,7 @@
 #                   having an option to disable these features for the more experienced players. The game also features a
 #                   information tab to show what is happening, such as whose turn it is. The game can be exited at any time
 #                   using the exit buttons on either menu or the main game.
-######################################################
+###############################################################################################################################
 from Tkinter import *
 
 DEBUG = False
@@ -529,6 +529,7 @@ class Game(Frame):
                 if (self.pieceSelected != None):
                     self.highlight(self.tiles[self.pieceSelected.position])
 
+    #display the pop up window with a victory message and a special jingle based on who wins
     def popupmsg(self, msg, pic):
         popup = Toplevel()
         img = None
@@ -546,6 +547,12 @@ class Game(Frame):
         picLabel.grid(row = 1, column = 0, padx = 10)
         B1 = Button(popup, text = "View Board", font = ("TkDefaultFont", 20), command = popup.destroy)
         B1.grid(row = 2, column = 0, pady = 10)
+        
+        #play the victory jingle one time
+        pygame.mixer.music.load("music/victory.ogg")
+        pygame.mixer.music.set_volume(0.20)
+        pygame.mixer.music.play(1)
+
         popup.mainloop()
 
     #function to allow Buttons to be processed after being clicked (NOTE: this function processes a button being
@@ -587,6 +594,7 @@ class Game(Frame):
                             
                         #see if the player would be in checkmate, and end the game if they are
                         if (self.checkMate()):
+                            #set variable to prevent the board from being modified and display a pop-up window announcing a winner
                             self.gameOver = True
                             self.information.config(text = "Checkmate! The game is over.")
                             if (self.pieceSelected.color == "white"):
@@ -707,6 +715,7 @@ class Game(Frame):
                                         
                                     #see if the player would be in checkmate, and end the game if they are
                                     if (self.checkMate()):
+                                        #set variable to prevent the board from being modified and display a pop-up window announcing a winner
                                         self.gameOver = True
                                         self.information.config(text = "Checkmate! The game is over.")
                                         if (self.pieceSelected.color == "white"):
@@ -791,6 +800,7 @@ class Game(Frame):
                                     
                                 #see if the player would be in checkmate, and end the game if they are
                                 if (self.checkMate()):
+                                    #set variable to prevent the board from being modified and display a pop-up window announcing a winner
                                     self.gameOver = True
                                     self.information.config(text = "Checkmate! The game is over.")
                                     if (self.pieceSelected.color == "white"):
@@ -1035,10 +1045,12 @@ class Game(Frame):
             self.p2Time -= 1
             self.timer2.config(text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)))
 
+        #if the timer for either player expires, stop the game and open the pop-up window to announce the winner
         if (self.p1Time == 0):
             self.gameOver = True
             self.information.config(text = "Time's up!\nThe game is over.")
             self.popupmsg("Time's up! The game is over.", "blueWin")
+            
         elif (self.p2Time == 0):
             self.gameOver = True
             self.information.config(text = "Time's up!\nThe game is over.")
@@ -1653,7 +1665,8 @@ window2.title("Chess Reloaded")
 menu = Menu(window2)
 menu.setupGUI()
 if MUSIC:
-    pygame.mixer.music.load("music/menu.mp3")
+    pygame.mixer.music.load("music/menu.ogg")
+    pygame.mixer.music.set_volume(0.5)
     #-1 in play makes an infinite loop of the music until it is told otherwise
     pygame.mixer.music.play(-1)
 window2.mainloop()
@@ -1700,6 +1713,7 @@ game.displayTurn()
 #play the music if desired
 if MUSIC:
     pygame.mixer.music.load("music/gameplay.ogg")
+    pygame.mixer.music.set_volume(1)
     #-1 in play makes an infinite loop of the music until it is told otherwise
     pygame.mixer.music.play(-1)
     
@@ -1710,7 +1724,7 @@ window.mainloop()
 
 #credits for music:
 #       freesound.org:
-#               littlerobotsoundfactory jingle_win_00.wav (victory.mp3)
+#               littlerobotsoundfactory jingle_win_00.wav (victory.ogg)
 #               fmceretta Racing game menu music - while buying
-#                    fancy cars we will never have!.mp3 (menu.mp3)
-#       E's Jammy Jam (gameplay.mp3)
+#                    fancy cars we will never have!.mp3 (menu.ogg)
+#       E's Jammy Jam (gameplay.ogg)
