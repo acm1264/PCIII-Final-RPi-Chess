@@ -11,7 +11,7 @@ from Tkinter import *
 
 DEBUG = False
 MUSIC = True
-GPIO = False
+GPIO = True
 
 #only import the pygame library if music is desired (meant for turning it off
 #during testing, or if pygame not compatable with user's device)
@@ -26,7 +26,6 @@ if (GPIO):
 class Menu(Frame):
     def __init__(self, master):
         self.master = master
-        #master.attributes("-fullscreen", True)
         self.timerType = IntVar()
         self.timerType.set(1)
         self.timerCheckboxType = IntVar()
@@ -105,7 +104,7 @@ class Game(Frame):
     def __init__(self, master):
         Frame.__init__(self, master)
         self.master = master
-        #master.attributes("-fullscreen", True)
+        master.attributes("-fullscreen", True)
         
         #variable utilized for displaying highlight (or not)
         self.highlightActive = True
@@ -999,7 +998,8 @@ class Game(Frame):
         self.tiles[pawnPosition].configure(image = newPiece.image)
         newPiece.updatePiecePosition(pawnPosition)
 
-        self.setupGPIO()
+        if (GPIO):
+            self.setupGPIO()
         
         #set pawn swap to false to indicate the swap was successfully completed
         self.pawnSwap = False
