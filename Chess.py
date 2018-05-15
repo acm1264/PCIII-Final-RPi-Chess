@@ -325,7 +325,7 @@ class Game(Frame):
         infoTitle = Label(self.master, text = "Information", font = ("TkDefaultFont", 12), width = 20)
         infoTitle.grid(row = 1, rowspan = 8, column = 0, sticky = N)
         #make the place for the actual information to display. Set to the string for the white player's turn to start with
-        self.information = Label(self.master, text = "Player One's turn. Select a white piece to move.", wraplength = 200, font = ("TkDefaultFont", 12), width = 20, bg = "red")
+        self.information = Label(self.master, text = "Player One's turn. Select a white piece to move.", wraplength = 180, font = ("TkDefaultFont", 12), width = 19, bg = "red")
         self.information.grid(row = 1, rowspan = 8, column = 0)
         
         # highlight checkbutton
@@ -958,11 +958,11 @@ class Game(Frame):
     def displayTurn(self):
         if (self.currentTurn == "white"):
             self.p1Turn.config(bg = "red", text = "Your Turn")
-            self.p2Turn.config(bg = "grey95", text = "")
+            self.p2Turn.config(bg = "grey85", text = "")
             self.information.config(bg = "red")
             
         else:
-            self.p1Turn.config(bg = "grey95", text = "")
+            self.p1Turn.config(bg = "grey85", text = "")
             self.p2Turn.config(bg = "light blue", text = "Your Turn")
             self.information.config(bg = "light blue")
 
