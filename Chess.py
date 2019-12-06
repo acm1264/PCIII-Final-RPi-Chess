@@ -7,11 +7,11 @@
 #                   information tab to show what is happening, such as whose turn it is. The game can be exited at any time
 #                   using the exit buttons on either menu or the main game.
 ###############################################################################################################################
-from Tkinter import *
+from tkinter import *
 
 DEBUG = False
 MUSIC = True
-GPIO = True
+GPIO = False
 
 #only import the pygame library if music is desired (meant for turning it off
 #during testing, or if pygame not compatable with user's device)
@@ -75,7 +75,7 @@ The button labeled \"Quit\" will exit the program. Thank you for playing!", \
             t.config(state = newState)
         
         if DEBUG:
-            print self.timerCheckboxType.get()
+            print(self.timerCheckboxType.get())
         
     def quitProgram(self):
         if (MUSIC):
@@ -104,7 +104,7 @@ class Game(Frame):
     def __init__(self, master):
         Frame.__init__(self, master)
         self.master = master
-        master.attributes("-fullscreen", True)
+        master.attributes("-fullscreen", False)
         
         #variable utilized for displaying highlight (or not)
         self.highlightActive = True
@@ -216,8 +216,8 @@ class Game(Frame):
         self._pawnSwap = value
 
     @property
-    def p1Time(self, value):
-        return self._p1Timer
+    def p1Time(self):
+        return self._p1Time
     @p1Time.setter
     def p1Time(self, value):
         self._p1Time = value
@@ -307,16 +307,16 @@ class Game(Frame):
 
         #"Your Turn" text (default to only show for white)
         #set as class variables to be editted in displayTurn function
-        self.p1Turn = Label(self.master, text = "Your Turn", font = ("TkDefaultFont", 12))
+        self.p1Turn = Label(self.master, text = "Your Turn", font = ("TkDefaultFont", 12), bg = "red")
         self.p1Turn.grid(row = 9, column = 4, columnspan = 2, sticky = N)
-        self.p2Turn = Label(self.master, text = "", font = ("TkDefaultFont", 12))
+        self.p2Turn = Label(self.master, text = "Your Turn", font = ("TkDefaultFont", 12), bg = "light blue")
         self.p2Turn.grid(row = 0, column = 4, columnspan = 2)
 
-        # timer text (set as class variables to be editted in countdown function)
-        self.timer1 = Label(self.master, text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
+        # timer text (set as class variables to be edited in countdown function)
+        self.timer1 = Label(self.master, text = "Time:   {}:{}".format(self.p1Time // 60, str(self.p1Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
         self.timer1.grid(row = 9, column = 6, columnspan = 3, sticky = N+E)
 
-        self.timer2 = Label(self.master, text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
+        self.timer2 = Label(self.master, text = "Time:   {}:{}".format(self.p2Time // 60, str(self.p2Time % 60).zfill(2)), font = ("TkDefaultFont", 12))
         self.timer2.grid(row = 0, column = 6, columnspan = 3, sticky = E)
 
         
@@ -503,11 +503,11 @@ class Game(Frame):
     def highlightCheck(self):
         if (not self.gameOver):
             if DEBUG:
-                print "this is the highlight check function"
+                print("this is the highlight check function")
             #turn highlighting on if it is already active else turn it on. Adjust highlights on or off appropriately
             if (self.highlightActive):
                 if DEBUG:
-                    print "the button is active, so turn it off"
+                    print("the button is active, so turn it off")
                         
                 self.highlightActive = False
                 #if there is a piece selected, remove the highlights from it and all possible moves 
@@ -517,7 +517,7 @@ class Game(Frame):
                     
             else:
                 if DEBUG:
-                    print "the button is inactive, so turn it on"
+                    print("the button is inactive, so turn it on")
                 self.highlightActive = True
                 #if there is a piece selected, remove the highlights from it and all possible moves 
                 if (self.pieceSelected != None):
@@ -564,11 +564,13 @@ class Game(Frame):
         if (pic == "blueWin"):
             img = PhotoImage(file = "images/BlueWin.gif")
             title = "Player 2 Wins!"
-            self.winFlash("blue", "purple")
+            if (GPIO):
+                self.winFlash("blue", "purple")
         elif (pic == "redWin"):
             img = PhotoImage(file = "images/RedWin.gif")
             title = "Player 1 Wins!"
-            self.winFlash("red", "purple")
+            if (GPIO):
+                self.winFlash("red", "purple")
         popup.wm_title(title)
         label = Label(popup, text = msg, font = ("TkDefaultFont", 30))
         label.grid(row = 0, column = 0, padx = 10, pady = 10)
@@ -621,7 +623,7 @@ class Game(Frame):
                     #check if the player about to move is in check as a result of the move just made by the opponent
                     if (self.kingCheck(king)):
                         if (DEBUG):
-                            print "The king is contested!"
+                            print("The king is contested!")
                             
                         #see if the player would be in checkmate, and end the game if they are
                         if (self.checkMate()):
@@ -669,7 +671,7 @@ class Game(Frame):
                             #get the list of possible moves the piece can perform
                             self.pieceSelectedMoves = self.pieceSelected.possibleMoves()
                             if DEBUG:
-                                print "possible moves of selected piece: {}".format(self.pieceSelectedMoves)
+                                print("possible moves of selected piece: {}".format(self.pieceSelectedMoves))
 
                             #if the player is contested, check if the possibleMoves of the selected piece
                             #would result in the player no longer being selected (logic in playerContested()
@@ -742,7 +744,7 @@ class Game(Frame):
                                 #check if the player about to move is in check as a result of the move just made by the opponent
                                 if (self.kingCheck(king)):
                                     if (DEBUG):
-                                        print "The king is contested!"
+                                        print("The king is contested!")
                                         
                                     #see if the player would be in checkmate, and end the game if they are
                                     if (self.checkMate()):
@@ -779,22 +781,22 @@ class Game(Frame):
 
                     #if the same piece was clicked a second time, deselect it and unhighlight everything
                     elif (secondPiece == self.pieceSelected):
-                            #remove highlight from the button holding the selected piece and possible moves
-                            self.removeHighlight(self.tiles[self.pieceSelected.position])
+                        #remove highlight from the button holding the selected piece and possible moves
+                        self.removeHighlight(self.tiles[self.pieceSelected.position])
 
-                            #set the piece selected to None
-                            self.pieceSelected = None
-                            self.pieceSelectedMoves = []
-                            
-                            #update info back to the default start of turn text
-                            #default text is for player being in check (if applicable)
-                            if (self.currentPlayerContested):
-                                self.information.config(text = "You are in Check! You must move a piece to exit this state.")
-                            #player is not in check, so use basic turn start text based on the current player's turn
-                            elif (self.currentTurn == "white"):
-                                self.information.config(text = "Player One's turn. Select a white piece to move.")
-                            else:
-                                self.information.config(text = "Player Two's turn. Select a black piece to move.")
+                        #set the piece selected to None
+                        self.pieceSelected = None
+                        self.pieceSelectedMoves = []
+                        
+                        #update info back to the default start of turn text
+                        #default text is for player being in check (if applicable)
+                        if (self.currentPlayerContested):
+                            self.information.config(text = "You are in Check! You must move a piece to exit this state.")
+                        #player is not in check, so use basic turn start text based on the current player's turn
+                        elif (self.currentTurn == "white"):
+                            self.information.config(text = "Player One's turn. Select a white piece to move.")
+                        else:
+                            self.information.config(text = "Player Two's turn. Select a black piece to move.")
                         
                     #there is a piece on the second tile selected, so check to see if the piece selected
                     #is in the valid range of pieceSelectedMoves
@@ -827,7 +829,7 @@ class Game(Frame):
                             #check if the player about to move is in check as a result of the move just made by the opponent
                             if (self.kingCheck(king)):
                                 if (DEBUG):
-                                    print "The king is contested!"
+                                    print("The king is contested!")
                                     
                                 #see if the player would be in checkmate, and end the game if they are
                                 if (self.checkMate()):
@@ -989,13 +991,13 @@ class Game(Frame):
     #function to display whose turn it is currently
     def displayTurn(self):
         if (self.currentTurn == "white"):
-            self.p1Turn.config(bg = "red", text = "Your Turn")
-            self.p2Turn.config(bg = "grey85", text = "")
+            self.p1Turn.grid()
+            self.p2Turn.grid_remove()
             self.information.config(bg = "red")
             
         else:
-            self.p1Turn.config(bg = "grey85", text = "")
-            self.p2Turn.config(bg = "light blue", text = "Your Turn")
+            self.p1Turn.grid_remove()
+            self.p2Turn.grid()
             self.information.config(bg = "light blue")
 
         # loops the function every millisecond
@@ -1049,7 +1051,7 @@ class Game(Frame):
                     self.p1Time = 900
                     self.p2Time = 900
                     if DEBUG:
-                        print "returning countdown for normal timer"
+                        print("returning countdown for normal timer")
                         
                 else:
                     #blitz timer
@@ -1071,11 +1073,13 @@ class Game(Frame):
         # counts down selected player's timer
         if (self.currentTurn == "white"):
             self.p1Time -= 1
-            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)))
+            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time // 60, str(self.p1Time % 60).zfill(2)))
+            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time // 60, str(self.p2Time % 60).zfill(2)))
              
         else:
             self.p2Time -= 1
-            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)))
+            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time // 60, str(self.p1Time % 60).zfill(2)))
+            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time // 60, str(self.p2Time % 60).zfill(2)))
 
         #if the timer for either player expires, stop the game and open the pop-up window to announce the winner
         if (self.p1Time == 0):
@@ -1097,11 +1101,13 @@ class Game(Frame):
         # counts down selected player's timer
         if (self.currentTurn == "white"):
             self.p1Time += 1
-            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time / 60, str(self.p1Time % 60).zfill(2)))
-             
+            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time // 60, str(self.p1Time % 60).zfill(2)))
+            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time // 60, str(self.p2Time % 60).zfill(2)))
+
         else:
             self.p2Time += 1
-            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time / 60, str(self.p2Time % 60).zfill(2)))
+            self.timer1.config(text = "Time:   {}:{}".format(self.p1Time // 60, str(self.p1Time % 60).zfill(2)))
+            self.timer2.config(text = "Time:   {}:{}".format(self.p2Time // 60, str(self.p2Time % 60).zfill(2)))
             
         # loops the function every second
         if (not self.gameOver):
@@ -1316,11 +1322,11 @@ class Game(Frame):
         #if there are no possible moves found for any pieces, the player is in checkmate
         if (checkmate):
             if DEBUG:
-                print "Checkmate, game over"
+                print("Checkmate, game over")
             return True
         else:
             if DEBUG:
-                print "only check, game continues"
+                print("only check, game continues")
             return False
 
     #function to process the moves for a player who is currently contested
@@ -1331,7 +1337,7 @@ class Game(Frame):
         remove = []
         for move in self.pieceSelectedMoves:
             if DEBUG:
-                print "move to look at: {}".format(move)
+                print("move to look at: {}".format(move))
             if (self.invalidUncheckMove(move)):
                 #the move is not valid for removing the player from check, so it is invalid
                 remove.append(move)
@@ -1342,14 +1348,14 @@ class Game(Frame):
             self.pieceSelectedMoves.remove(index)
 
         if DEBUG:
-            print "since player is contested, this is the new list of "\
-                    + "possible moves: {}".format(self.pieceSelectedMoves)
+            print("since player is contested, this is the new list of "\
+                    + "possible moves: {}".format(self.pieceSelectedMoves))
 
     #function to determine if a specified move is valid to make the king no longer be in check
     #or to make sure a move would not make the player put themselves into check
     def invalidUncheckMove(self, move):
         if DEBUG:
-            print "Move in question: {}".format(move)
+            print("Move in question: {}".format(move))
             
         #if there is a piece at the position in question that the selected piece is being moved to, then
         #it must be an overtake, so find that piece and remove its position (to be added back at end)
@@ -1360,10 +1366,10 @@ class Game(Frame):
             overtakenPiece = self.getPiece(self.tiles[move])
             overtakenPiece.updatePiecePosition(00)
             if DEBUG:
-                print "overtaken piece position set to {}".format(overtakenPiece.position)
+                print("overtaken piece position set to {}".format(overtakenPiece.position))
 
         elif (DEBUG):
-            print "no piece to overtake"
+            print("no piece to overtake")
 
         #store the piece in question's current position so it can be reset
         originalPos = self.pieceSelected.position
@@ -1371,7 +1377,7 @@ class Game(Frame):
         #does not need to be changed
         self.pieceSelected.updatePiecePosition(move)
         if DEBUG:
-            print "selected piece position updated to move: {}".format(self.pieceSelected.position)
+            print("selected piece position updated to move: {}".format(self.pieceSelected.position))
 
         
                         
@@ -1383,21 +1389,21 @@ class Game(Frame):
             invalid = self.kingCheck(self.getBlackKing())
 
         if DEBUG:
-            print "invalid = {}".format(invalid)
+            print("invalid = {}".format(invalid))
 
         #change the position of the selected piece back to where it originally was
         self.pieceSelected.updatePiecePosition(originalPos)
         if DEBUG:
-            print "selected piece position reset to: {}".format(self.pieceSelected.position)
+            print("selected piece position reset to: {}".format(self.pieceSelected.position))
 
         #if the overtaken piece had its position removed, then add it back
         if (overtakenPiece != None):
             overtakenPiece.updatePiecePosition(move)
             if DEBUG:
-                print "overtaken piece position reset to: {}".format(overtakenPiece.position)
+                print("overtaken piece position reset to: {}".format(overtakenPiece.position))
 
         if DEBUG:    
-            print "end of looking at move {}, proceeding...........................".format(move)
+            print("end of looking at move {}, proceeding...........................".format(move))
         #returns whether the possible move is valid to take the player out of check
         return invalid
             
@@ -1418,7 +1424,7 @@ class Piece(Game):
         #call function to set the full position coordinate, along with the individual row and column values for easy access to each seperately
         self.position = position
         #set the values of row and column based on the position
-        self.row = self.position / 10
+        self.row = self.position // 10
         self.column = self.position % 10
 
     #accessors and mutators for position, row, and column
@@ -1450,7 +1456,7 @@ class Piece(Game):
     #function to easily change the row and column at the same time as a position change
     def updatePiecePosition(self, position):
         self.position = position
-        self.row = position / 10
+        self.row = position // 10
         self.column = position %10
     
     # function to determine if tile is in proper range
